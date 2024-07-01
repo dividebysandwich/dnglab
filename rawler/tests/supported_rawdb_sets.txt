@@ -82,6 +82,7 @@ cameras/Canon/EOS R7/raw_modes
 cameras/Canon/EOS R8/raw_modes
 cameras/Canon/EOS R10/raw_modes
 cameras/Canon/EOS R50/raw_modes
+cameras/Canon/EOS R100/raw_modes
 cameras/Canon/EOS Rebel SL1/raw_modes
 cameras/Canon/EOS Rebel SL2/raw_modes
 cameras/Canon/EOS Rebel SL3/raw_modes
@@ -530,6 +531,7 @@ cameras/Panasonic/DC-G90/raw_modes
 cameras/Panasonic/DC-G91/raw_modes
 cameras/Panasonic/DC-G95/raw_modes
 cameras/Panasonic/DC-G9/raw_modes
+cameras/Panasonic/DC-G9M2/raw_modes
 cameras/Panasonic/DC-GF10/raw_modes
 cameras/Panasonic/DC-GH5M2/raw_modes
 cameras/Panasonic/DC-GH5/raw_modes
@@ -741,6 +743,7 @@ cameras/Fujifilm/X-T3/raw_modes
 cameras/Fujifilm/X-T4/raw_modes
 cameras/Fujifilm/X-T4/compressed
 cameras/Fujifilm/X-T5/raw_modes
+cameras/Fujifilm/X-T50/raw_modes
 cameras/OM/OM-1/raw_modes
 cameras/OM/OM-1 Mark II/raw_modes
 cameras/OM/OM-5/raw_modes

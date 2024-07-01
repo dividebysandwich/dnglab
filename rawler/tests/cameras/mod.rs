@@ -346,6 +346,10 @@ mod camera_eos_r50_raw_modes {
   super::camera_file_check!("Canon", "EOS R50", cam_canon_r50_iso32000_craw_ms_cr3, "raw_modes/Canon_R50_ISO32000_CRAW_ms.CR3");
   super::camera_file_check!("Canon", "EOS R50", cam_canon_r50_iso32000_craw_es_cr3, "raw_modes/Canon_R50_ISO32000_CRAW_es.CR3");
 }
+mod camera_eos_r100_raw_modes {
+  super::camera_file_check!("Canon", "EOS R100", cam_canon_eos_r100_craw_cr3, "raw_modes/Canon_EOS_R100_CRAW.CR3");
+  super::camera_file_check!("Canon", "EOS R100", cam_canon_eos_r100_raw_cr3, "raw_modes/Canon_EOS_R100_RAW.CR3");
+}
 mod camera_eos_rebel_sl1_raw_modes {
   super::camera_file_check!("Canon", "EOS Rebel SL1", cam_canon_eos_rebel_sl1_iso_400_raw_cr2, "raw_modes/Canon EOS REBEL SL1_ISO_400_RAW.CR2");
 }
@@ -1969,6 +1973,10 @@ mod camera_dc_g9_raw_modes {
   super::camera_file_check!("Panasonic", "DC-G9", cam_dc_g9_iso_200_5fmt_80mp_hires_rw2, "raw_modes/DC-G9_ISO_200_5fmt_80mp_hires.RW2");
   super::camera_file_check!("Panasonic", "DC-G9", cam_dc_g9_iso_200_4fmt_3x2_rw2, "raw_modes/DC-G9_ISO_200_4fmt_3x2.RW2");
 }
+mod camera_dc_g9m2_raw_modes {
+  super::camera_file_check!("Panasonic", "DC-G9M2", cam_dc_g9m2_iso_100_8fmt_5776x4336_rw2, "raw_modes/DC-G9M2_ISO_100_8fmt_5776x4336.RW2");
+  super::camera_file_check!("Panasonic", "DC-G9M2", cam_dc_g9m2_iso_100_8fmt_11552x8672_rw2, "raw_modes/DC-G9M2_ISO_100_8fmt_11552x8672.RW2");
+}
 mod camera_dc_gf10_raw_modes {
   super::camera_file_check!("Panasonic", "DC-GF10", cam_dc_gf10_iso_200_panasonic_raw_1_4592x3448_rw2, "raw_modes/DC-GF10_ISO_200_Panasonic RAW 1_4592x3448.RW2");
   super::camera_file_check!("Panasonic", "DC-GF10", cam_p1010137_rw2, "raw_modes/P1010137.RW2");
@@ -2850,6 +2858,11 @@ mod camera_x_t5_raw_modes {
   super::camera_file_check!("Fujifilm", "X-T5", cam_x_t5_iso_125_bitdepth_14_lossy_raf, "raw_modes/X-T5_ISO_125_Bitdepth_14_lossy.RAF");
   super::camera_file_check!("Fujifilm", "X-T5", cam_x_t5_iso_125_bitdepth_14_lossless_raf, "raw_modes/X-T5_ISO_125_Bitdepth_14_lossless.RAF");
   super::camera_file_check!("Fujifilm", "X-T5", cam_x_t5_iso_125_bitdepth_14_uncompressed_raf, "raw_modes/X-T5_ISO_125_Bitdepth_14_uncompressed.RAF");
+}
+mod camera_x_t50_raw_modes {
+  super::camera_file_check!("Fujifilm", "X-T50", cam_xt50_14bit_uncompressed_raf, "raw_modes/XT50_14bit_uncompressed.RAF");
+  super::camera_file_check!("Fujifilm", "X-T50", cam_xt50_14bit_lossless_raf, "raw_modes/XT50_14bit_lossless.RAF");
+  super::camera_file_check!("Fujifilm", "X-T50", cam_xt50_14bit_lossy_raf, "raw_modes/XT50_14bit_lossy.RAF");
 }
 mod camera_om_1_raw_modes {
   super::camera_file_check!("OM", "OM-1", cam_om_1_iso_200_16bits_normal_orf, "raw_modes/OM-1_ISO_200_16bits_normal.ORF");
