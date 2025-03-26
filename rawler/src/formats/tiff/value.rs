@@ -845,7 +845,7 @@ impl Value {
               | ((*v.get(3).unwrap_or(&0) as u32) << 24),
           )
         }
-        Self::Short(v) => Ok((v[0] as u32) | (*v.get(1).unwrap_or(&0) as u32) << 16),
+        Self::Short(v) => Ok((v[0] as u32) | ((*v.get(1).unwrap_or(&0) as u32) << 16)),
         Self::Long(v) => Ok(v[0]),
         Self::SByte(v) => Ok(
           (*v.get(0).unwrap_or(&0) as u32)
@@ -859,7 +859,7 @@ impl Value {
             | ((*v.get(2).unwrap_or(&0) as u32) << 16)
             | ((*v.get(3).unwrap_or(&0) as u32) << 24),
         ),
-        Self::SShort(v) => Ok((v[0] as u32) | (*v.get(1).unwrap_or(&0) as u32) << 16),
+        Self::SShort(v) => Ok((v[0] as u32) | ((*v.get(1).unwrap_or(&0) as u32) << 16)),
         Self::SLong(v) => Ok(v[0] as u32),
         Self::Float(v) => Ok(v[0] as u32),
         Self::Unknown(_, v) => Ok(
@@ -1195,6 +1195,18 @@ impl From<u32> for Value {
 impl From<&[u32]> for Value {
   fn from(value: &[u32]) -> Self {
     Value::Long(value.into())
+  }
+}
+
+impl From<Vec<i16>> for Value {
+  fn from(value: Vec<i16>) -> Self {
+    Value::SShort(value)
+  }
+}
+
+impl From<&Vec<i16>> for Value {
+  fn from(value: &Vec<i16>) -> Self {
+    Value::SShort(value.clone())
   }
 }
 

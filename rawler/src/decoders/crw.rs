@@ -1,5 +1,4 @@
-use std::f32::NAN;
-
+use crate::RawImage;
 use crate::alloc_image;
 use crate::decoders::*;
 use crate::decompressors::ljpeg::huffman::*;
@@ -7,7 +6,6 @@ use crate::formats::ciff::*;
 use crate::packed::*;
 use crate::pumps::BitPump;
 use crate::pumps::BitPumpJPEG;
-use crate::RawImage;
 
 const CRW_FIRST_TREE: [[u8; 29]; 3] = [
   [
@@ -60,7 +58,7 @@ pub struct CrwDecoder<'a> {
 }
 
 impl<'a> CrwDecoder<'a> {
-  pub fn new(file: &mut RawFile, rawloader: &'a RawLoader) -> Result<CrwDecoder<'a>> {
+  pub fn new(file: &RawSource, rawloader: &'a RawLoader) -> Result<CrwDecoder<'a>> {
     let ciff = CiffIFD::new_file(file).unwrap();
 
     let makemodel = fetch_ciff_tag!(ciff, CiffTag::MakeModel).get_strings();
@@ -74,10 +72,10 @@ impl<'a> CrwDecoder<'a> {
 }
 
 impl<'a> Decoder for CrwDecoder<'a> {
-  fn raw_image(&self, file: &mut RawFile, _params: RawDecodeParams, dummy: bool) -> Result<RawImage> {
+  fn raw_image(&self, file: &RawSource, _params: &RawDecodeParams, dummy: bool) -> Result<RawImage> {
     let image = if self.camera.model == "Canon PowerShot Pro70" {
       let src = file.subview_until_eof(26).unwrap();
-      decode_10le_lsb16(&src, 1552, 1024, dummy)
+      decode_10le_lsb16(src, 1552, 1024, dummy)
     } else {
       let sensorinfo = fetch_ciff_tag!(self.ciff, CiffTag::SensorInfo);
       let width = sensorinfo.get_usize(1);
@@ -105,7 +103,7 @@ impl<'a> Decoder for CrwDecoder<'a> {
     todo!()
   }
 
-  fn raw_metadata(&self, _file: &mut RawFile, __params: RawDecodeParams) -> Result<RawMetadata> {
+  fn raw_metadata(&self, _file: &RawSource, __params: &RawDecodeParams) -> Result<RawMetadata> {
     // TODO: Add EXIF info
     let exif = Exif::default();
     Ok(RawMetadata::new(&self.camera, exif))
@@ -156,7 +154,7 @@ impl<'a> CrwDecoder<'a> {
         (cinfo.get_force_u16(off + 2) ^ key[0]) as f32,
       ]);
     }
-    Ok([NAN, NAN, NAN, NAN])
+    Ok([f32::NAN, f32::NAN, f32::NAN, f32::NAN])
   }
 
   fn create_hufftables(num: usize) -> [HuffTable; 2] {
@@ -178,7 +176,7 @@ impl<'a> CrwDecoder<'a> {
     htable
   }
 
-  fn decode_compressed(&self, file: &mut RawFile, width: usize, height: usize, dummy: bool) -> Result<PixU16> {
+  fn decode_compressed(&self, file: &RawSource, width: usize, height: usize, dummy: bool) -> Result<PixU16> {
     let lowbits = !self.camera.find_hint("nolowbits");
     let dectable = fetch_ciff_tag!(self.ciff, CiffTag::DecoderTable).get_usize(0);
     if dectable > 2 {
@@ -187,13 +185,13 @@ impl<'a> CrwDecoder<'a> {
     Ok(Self::do_decode(file, lowbits, dectable, width, height, dummy))
   }
 
-  pub(crate) fn do_decode(file: &mut RawFile, lowbits: bool, dectable: usize, width: usize, height: usize, dummy: bool) -> PixU16 {
+  pub(crate) fn do_decode(file: &RawSource, lowbits: bool, dectable: usize, width: usize, height: usize, dummy: bool) -> PixU16 {
     let mut out = alloc_image!(width, height, dummy);
 
     let htables = Self::create_hufftables(dectable);
     let offset = 540 + (lowbits as usize) * height * width / 4;
     let src = file.subview_until_eof(offset as u64).unwrap();
-    let mut pump = BitPumpJPEG::new(&src);
+    let mut pump = BitPumpJPEG::new(src);
 
     let mut carry: i32 = 0;
     let mut base = [0_i32; 2];
@@ -248,10 +246,10 @@ impl<'a> CrwDecoder<'a> {
       // Add the uncompressed 2 low bits to the decoded 8 high bits
       for (i, o) in out.pixels_mut().chunks_exact_mut(4).enumerate() {
         let c = buffer[26 + i] as u16;
-        o[0] = o[0] << 2 | (c) & 0x03;
-        o[1] = o[1] << 2 | (c >> 2) & 0x03;
-        o[2] = o[2] << 2 | (c >> 4) & 0x03;
-        o[3] = o[3] << 2 | (c >> 6) & 0x03;
+        o[0] = (o[0] << 2) | (c) & 0x03;
+        o[1] = (o[1] << 2) | (c >> 2) & 0x03;
+        o[2] = (o[2] << 2) | (c >> 4) & 0x03;
+        o[3] = (o[3] << 2) | (c >> 6) & 0x03;
         if width == 2672 {
           // No idea why this is needed, probably some broken camera
           if o[0] < 512 {
@@ -284,5 +282,5 @@ fn normalize_wb(raw_wb: [f32; 4]) -> [f32; 4] {
       *v /= div
     }
   });
-  [norm[0], (norm[1] + norm[2]) / 2.0, norm[3], NAN]
+  [norm[0], (norm[1] + norm[2]) / 2.0, norm[3], f32::NAN]
 }

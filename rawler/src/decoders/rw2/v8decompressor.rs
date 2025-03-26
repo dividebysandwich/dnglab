@@ -10,12 +10,12 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use crate::{
   alloc_image_ok,
-  bits::{clamp, Endian},
-  decoders::{rw2::PanasonicTag, Result},
+  bits::{Endian, clamp},
+  decoders::{Result, rw2::PanasonicTag},
   formats::tiff::IFD,
   pixarray::{PixU16, SharedPix2D},
   pumps::{BitPump, BitPumpReverseBitsMSB, ByteStream},
-  RawFile,
+  rawsource::RawSource,
 };
 
 #[derive(Clone, Debug)]
@@ -353,7 +353,7 @@ fn make_gammatable(params: &CF2Params) -> Option<Vec<u16>> {
 }
 
 /// Decode Panasonic V8 bitstreams
-pub(crate) fn decode_panasonic_v8(rawfile: &mut RawFile, width: usize, height: usize, _bps: u32, ifd: &IFD, dummy: bool) -> Result<PixU16> {
+pub(crate) fn decode_panasonic_v8(rawfile: &RawSource, width: usize, height: usize, _bps: u32, ifd: &IFD, dummy: bool) -> Result<PixU16> {
   let out = alloc_image_ok!(width, height, dummy);
 
   let params = CF2Params::new(ifd)?;
@@ -422,11 +422,7 @@ fn decode_strip(buf: &[u8], params: &CF2Params, strip_id: usize, out: &mut PixU1
         if sign == 1 {
           val
         } else if ssss > 0 {
-          if shift_down != 0 {
-            val + (-1 << ssss)
-          } else {
-            val + (-1 << ssss) + 1
-          }
+          if shift_down != 0 { val + (-1 << ssss) } else { val + (-1 << ssss) + 1 }
         } else {
           0
         }

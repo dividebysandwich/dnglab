@@ -94,6 +94,11 @@ where
     self.data.chunks_exact_mut(self.width)
   }
 
+  pub fn par_pixel_rows_mut(&mut self) -> rayon::slice::ChunksExactMut<'_, T> {
+    debug_assert!(self.initialized);
+    self.data.par_chunks_exact_mut(self.width)
+  }
+
   #[inline(always)]
   pub fn at(&self, row: usize, col: usize) -> &T {
     debug_assert!(self.initialized);
@@ -218,7 +223,7 @@ impl<T> SharedPix2D<T> {
   /// Only use this inside Rayon parallel iterators.
   #[allow(clippy::mut_from_ref)]
   pub unsafe fn inner_mut(&self) -> &mut Pix2D<T> {
-    &mut *self.inner.get()
+    unsafe { &mut *self.inner.get() }
   }
 
   pub fn into_inner(self) -> Pix2D<T> {
@@ -394,8 +399,10 @@ where
   /// TODO
   #[inline(always)]
   pub unsafe fn at(&self, row: usize, col: usize) -> &[T; N] {
-    debug_assert!(row * col < self.height * self.width);
-    &*self.ptr.add(row * self.width + col)
+    unsafe {
+      debug_assert!(row * col < self.height * self.width);
+      &*self.ptr.add(row * self.width + col)
+    }
   }
 }
 

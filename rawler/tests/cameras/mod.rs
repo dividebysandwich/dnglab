@@ -1,4 +1,11 @@
 use crate::common::camera_file_check;
+mod camera_quicktake_100_raw_modes {
+  super::camera_file_check!("Apple", "QuickTake 100", cam_apple_quicktake_100_320x240_qtk, "raw_modes/Apple_QuickTake_100_320x240.qtk");
+  super::camera_file_check!("Apple", "QuickTake 100", cam_apple_quicktake_100_480x640_qtk, "raw_modes/Apple_QuickTake_100_480x640.qtk");
+}
+mod camera_quicktake_150_raw_modes {
+  super::camera_file_check!("Apple", "QuickTake 150", cam_apple_quicktake_150_480x640_qtk, "raw_modes/Apple_QuickTake_150_480x640.qtk");
+}
 mod camera_eos_1000d_raw_modes {
   super::camera_file_check!("Canon", "EOS 1000D", cam_canon_eos_1000d_iso_200_raw_cr2, "raw_modes/Canon EOS 1000D_ISO_200_RAW.CR2");
 }
@@ -788,6 +795,14 @@ mod camera_p25_raw_modes {
   super::camera_file_check!("Phase One", "P25", cam_p25_4x3_s_iiq, "raw_modes/P25_4x3_S.IIQ");
   super::camera_file_check!("Phase One", "P25", cam_p25_4x3_l_iiq, "raw_modes/P25_4x3_L.IIQ");
 }
+mod camera_p25plus_raw_modes {
+  super::camera_file_check!("Phase One", "P25+", cam_p25__s_4x3_iiq, "raw_modes/P25+_S_4x3.IIQ");
+  super::camera_file_check!("Phase One", "P25+", cam_p25__l_4x3_iiq, "raw_modes/P25+_L_4x3.IIQ");
+}
+mod camera_p45plus_raw_modes {
+  super::camera_file_check!("Phase One", "P45+", cam_p45__l_4x3_iiq, "raw_modes/P45+_L_4x3.IIQ");
+  super::camera_file_check!("Phase One", "P45+", cam_p45__s_4x3_iiq, "raw_modes/P45+_S_4x3.IIQ");
+}
 mod camera_d3500_raw_modes {
   super::camera_file_check!("Nikon", "D3500", cam_nikon_d3500_iso_100_12bits_lossy__type_2__nef, "raw_modes/NIKON D3500_ISO_100_12bits_Lossy (type 2).NEF");
 }
@@ -1550,6 +1565,9 @@ mod camera_zv_e10m2_raw_modes {
   super::camera_file_check!("Sony", "ZV-E10M2", cam_zv_e10m2_iso_400_12bits_compressed_raw_arw, "raw_modes/ZV-E10M2_ISO_400_12bits_Compressed RAW.ARW");
   super::camera_file_check!("Sony", "ZV-E10M2", cam_zv_e10m2_iso_400_12bits_lossless_compressed_raw_arw, "raw_modes/ZV-E10M2_ISO_400_12bits_Lossless Compressed RAW.ARW");
 }
+mod camera_umc_r10c_raw_modes {
+  super::camera_file_check!("Sony", "UMC-R10C", cam_umc_r10c_iso_200_12bits_sony_arw_compressed_arw, "raw_modes/UMC-R10C_ISO_200_12bits_Sony ARW Compressed.ARW");
+}
 mod camera_r_d1_raw_modes {
   super::camera_file_check!("Epson", "R-D1", cam_r_d1_iso_400_12bits_erf, "raw_modes/R-D1_ISO_400_12bits.ERF");
 }
@@ -1714,6 +1732,9 @@ mod camera_wb2000_raw_modes {
 mod camera_dc120_raw_modes {
   super::camera_file_check!("Kodak", "DC120", cam_kodak_dc120_zoom_digital_camera_jpeg_kdc, "raw_modes/Kodak DC120 ZOOM Digital Camera_JPEG.KDC");
   super::camera_file_check!("Kodak", "DC120", cam_kodak_dc120_zoom_digital_camera_uncompressed_kdc, "raw_modes/Kodak DC120 ZOOM Digital Camera_Uncompressed.KDC");
+}
+mod camera_dc50_raw_modes {
+  super::camera_file_check!("Kodak", "DC50", cam_kodak_dc50_compressed_kdc, "raw_modes/Kodak_DC50_compressed.KDC");
 }
 mod camera_dcs460d_raw_modes {
   super::camera_file_check!("Kodak", "DCS460D", cam_dcs460d_tiff, "raw_modes/DCS460D.TIFF");

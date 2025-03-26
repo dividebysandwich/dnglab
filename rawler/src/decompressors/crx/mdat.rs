@@ -5,7 +5,7 @@
 // Rewritten in Rust by Daniel Vogelbacher, based on logic found in
 // crx.cpp and documentation done by Laurent Clévy (https://github.com/lclevy/canon_cr3).
 
-use super::{iquant::QStep, Result};
+use super::{Result, iquant::QStep};
 use crate::decompressors::crx::CrxError;
 use byteorder::{BigEndian, ReadBytesExt};
 use std::io::{Cursor, Read};
@@ -133,6 +133,7 @@ pub struct TileQPData {
 }
 
 #[derive(Debug, Clone)]
+#[allow(unused)]
 pub struct Plane {
   // Header fields
   pub ind: u16,
@@ -194,6 +195,7 @@ impl Plane {
 ///
 /// Two indicators are known: 0xFF03 and 0xFF13
 #[derive(Debug, Clone, Default)]
+#[allow(unused)]
 pub struct Subband {
   /// Indicator, 0xFF03 for version 1, 0xFF13 for version 2
   pub ind: u16,
@@ -312,8 +314,16 @@ impl Subband {
   pub fn descriptor_line(&self) -> String {
     format!(
       "    Subband {:#x} size: {:#x} subband_size: {:#x} flags: {:#x} counter: {:#x} support_partial: {} q_param: {:#x} unused_bytes: {:#x} qStepBase: {:#x} qStepMult: {:#x} ",
-      self.ind, self.header_size, self.subband_size, self.flags, self.counter, self.support_partial, self.q_param, self.unused_bytes, self.q_step_base, self.q_step_multi
-
+      self.ind,
+      self.header_size,
+      self.subband_size,
+      self.flags,
+      self.counter,
+      self.support_partial,
+      self.q_param,
+      self.unused_bytes,
+      self.q_step_base,
+      self.q_step_multi
     )
   }
 

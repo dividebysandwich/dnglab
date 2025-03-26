@@ -132,11 +132,11 @@ pub struct LjpegDecompressor<'a> {
 }
 
 impl<'a> LjpegDecompressor<'a> {
-  pub fn new(src: &'a [u8]) -> Result<LjpegDecompressor, String> {
+  pub fn new(src: &'a [u8]) -> Result<LjpegDecompressor<'a>, String> {
     LjpegDecompressor::new_full(src, false, false)
   }
 
-  pub fn new_full(src: &'a [u8], dng_bug: bool, csfix: bool) -> Result<LjpegDecompressor, String> {
+  pub fn new_full(src: &'a [u8], dng_bug: bool, csfix: bool) -> Result<LjpegDecompressor<'a>, String> {
     let mut input = ByteStream::new(src, Endian::Big);
     if LjpegDecompressor::get_next_marker(&mut input, false)? != m(Marker::SOI) {
       return Err("ljpeg: Image did not start with SOI. Probably not LJPEG".to_string());
@@ -210,12 +210,16 @@ impl<'a> LjpegDecompressor<'a> {
 
   fn get_next_marker(input: &mut ByteStream, allowskip: bool) -> Result<u8, String> {
     if !allowskip {
-      if input.get_u8() != 0xff {
-        return Err("ljpeg: (noskip) expected marker not found".to_string());
+      let fill = input.get_u8();
+      if fill != m(Marker::Fill) {
+        return Err(format!("ljpeg get_next_marker() (noskip) expected fill marker 0XFF but got 0x{:X}", fill));
       }
       let mark = input.get_u8();
       if mark == m(Marker::Stuff) || mark == m(Marker::Fill) {
-        return Err("ljpeg: (noskip) expected marker but found stuff or fill".to_string());
+        return Err(format!(
+          "ljpeg get_next_marker() (noskip) expected marker but found STUFF or FILL (0x{:X})",
+          mark
+        ));
       }
       return Ok(mark);
     }

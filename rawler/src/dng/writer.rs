@@ -5,16 +5,17 @@ use std::{
   time::Instant,
 };
 
-use image::{imageops::FilterType, DynamicImage};
+use image::{DynamicImage, codecs::jpeg::JpegEncoder, imageops::FilterType};
 use log::debug;
 use rayon::prelude::*;
 
 use crate::{
+  CFA, RawImage, RawImageData,
   decoders::{Camera, RawMetadata},
   dng::rect_to_dng_area,
   formats::tiff::{
-    writer::{transfer_entry, DirectoryWriter, TiffWriter},
     CompressionMethod, PhotometricInterpretation, PreviewColorSpace, Rational, TiffError, Value,
+    writer::{DirectoryWriter, TiffWriter, transfer_entry},
   },
   imgop::{Dim2, Point, Rect},
   ljpeg92::LjpegCompressor,
@@ -22,7 +23,6 @@ use crate::{
   rawimage::{BlackLevel, RawPhotometricInterpretation, WhiteLevel},
   tags::ExifTag,
   tiles::ImageTiler,
-  RawImage, RawImageData, CFA,
 };
 use crate::{
   formats::tiff::SRational,
@@ -30,7 +30,7 @@ use crate::{
   tags::{DngTag, TiffCommonTag},
 };
 
-use super::{original::OriginalCompressed, CropMode, DngCompression, DngPhotometricConversion, DNG_VERSION_V1_6};
+use super::{CropMode, DNG_VERSION_V1_6, DngCompression, DngPhotometricConversion, original::OriginalCompressed};
 
 pub type DngError = TiffError;
 
@@ -96,7 +96,7 @@ where
 
   pub fn rgb_image_u16(&mut self, data: &[u16], width: usize, height: usize, compression: DngCompression, predictor: u8) -> Result<()> {
     let cpp = 3;
-    let rawimagedata = PixU16::new_with(data.iter().copied().map(u16::from).collect(), width * cpp, height);
+    let rawimagedata = PixU16::new_with(data.to_vec(), width * cpp, height);
     let mut cam = Camera::new();
     cam.cfa = CFA::new("RGGB");
 
@@ -152,7 +152,7 @@ where
     }
 
     if rawimage.cpp > 1 || matches!(rawimage.photometric, RawPhotometricInterpretation::Cfa(_)) {
-      self.writer.as_shot_neutral(&wbcoeff_to_tiff_value(&rawimage));
+      self.writer.as_shot_neutral(wbcoeff_to_tiff_value(&rawimage));
       // Add matrix and illumninant
       let mut available_matrices = rawimage.color_matrix.clone();
       if let Some(first_key) = available_matrices.keys().next().cloned() {
@@ -336,8 +336,9 @@ where
     let now = Instant::now();
     let offset = self.writer.dng.position()?;
     // TODO: improve offsets?
+    let jpeg_encoder = JpegEncoder::new_with_quality(&mut self.writer.dng.writer, (quality * 100.0).max(100.0) as u8);
     preview_img
-      .write_to(&mut self.writer.dng.writer, image::ImageOutputFormat::Jpeg((quality * u8::MAX as f32) as u8))
+      .write_with_encoder(jpeg_encoder)
       .map_err(|err| io::Error::new(io::ErrorKind::Other, format!("Failed to write jpeg preview: {:?}", err)))?;
     let data_len = self.writer.dng.position()? - offset;
     debug!("writing preview: {} s", now.elapsed().as_secs_f32());
@@ -708,7 +709,7 @@ mod tests {
     use crate::{
       decoders::RawDecodeParams,
       dng::{DNG_VERSION_V1_4, PREVIEW_JPEG_QUALITY},
-      RawFile,
+      rawsource::RawSource,
     };
     use std::{
       fs::File,
@@ -717,19 +718,19 @@ mod tests {
     };
 
     let mut rawdb = PathBuf::from(std::env::var("RAWLER_RAWDB").expect("RAWLER_RAWDB variable must be set in order to run RAW test!"));
-    rawdb.push("cameras/Canon/EOS R5/raw_modes/Canon EOS R5_RAW_ISO_100_nocrop_nodual.CR3");
+    rawdb.push("cameras/Canon/EOS R6/raw_modes/Canon EOS R6_RAW_ISO_100_nocrop_nodual.CR3");
 
-    let mut rawfile = RawFile::new(rawdb.clone(), File::open(rawdb.clone()).unwrap());
+    let rawfile = RawSource::new(&rawdb)?;
 
     let original_thread = std::thread::spawn(|| OriginalCompressed::compress(&mut BufReader::new(File::open(rawdb).unwrap())));
 
-    let decoder = crate::get_decoder(&mut rawfile)?;
+    let decoder = crate::get_decoder(&rawfile)?;
 
-    let rawimage = decoder.raw_image(&mut rawfile, RawDecodeParams::default(), false)?;
+    let rawimage = decoder.raw_image(&rawfile, &RawDecodeParams::default(), false)?;
 
-    let full_image = decoder.full_image(&mut rawfile)?.unwrap();
+    let full_image = decoder.full_image(&rawfile, &RawDecodeParams::default())?.unwrap();
 
-    let metadata = decoder.raw_metadata(&mut rawfile, RawDecodeParams::default())?;
+    let metadata = decoder.raw_metadata(&rawfile, &RawDecodeParams::default())?;
 
     let predictor = 1;
 
@@ -753,7 +754,7 @@ mod tests {
 
     dng.load_metadata(&metadata)?;
 
-    if let Some(xpacket) = decoder.xpacket(&mut rawfile, RawDecodeParams::default())? {
+    if let Some(xpacket) = decoder.xpacket(&rawfile, &RawDecodeParams::default())? {
       dng.xpacket(xpacket)?;
     }
 

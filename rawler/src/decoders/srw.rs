@@ -1,16 +1,19 @@
 use log::warn;
 use std::cmp;
-use std::f32::NAN;
 
+use crate::RawImage;
+use crate::RawLoader;
+use crate::RawlerError;
+use crate::Result;
 use crate::alloc_image;
 use crate::analyze::FormatDump;
-use crate::bits::clampbits;
 use crate::bits::LEu32;
+use crate::bits::clampbits;
 use crate::exif::Exif;
-use crate::formats::tiff::ifd::OffsetMode;
-use crate::formats::tiff::reader::TiffReader;
 use crate::formats::tiff::GenericTiffReader;
 use crate::formats::tiff::IFD;
+use crate::formats::tiff::ifd::OffsetMode;
+use crate::formats::tiff::reader::TiffReader;
 use crate::lens::LensDescription;
 use crate::lens::LensResolver;
 use crate::packed::decode_12be;
@@ -21,21 +24,16 @@ use crate::pixarray::PixU16;
 use crate::pumps::BitPump;
 use crate::pumps::BitPumpMSB;
 use crate::pumps::BitPumpMSB32;
+use crate::rawsource::RawSource;
 use crate::tags::ExifTag;
 use crate::tags::TiffCommonTag;
-use crate::OptBuffer;
-use crate::RawFile;
-use crate::RawImage;
-use crate::RawLoader;
-use crate::RawlerError;
-use crate::Result;
 
-use super::ok_cfa_image_with_blacklevels;
 use super::Camera;
 use super::Decoder;
 use super::FormatHint;
 use super::RawDecodeParams;
 use super::RawMetadata;
+use super::ok_cfa_image_with_blacklevels;
 
 const NX_MOUNT: &str = "NX-mount";
 
@@ -49,11 +47,11 @@ pub struct SrwDecoder<'a> {
 }
 
 impl<'a> SrwDecoder<'a> {
-  pub fn new(file: &mut RawFile, tiff: GenericTiffReader, rawloader: &'a RawLoader) -> Result<SrwDecoder<'a>> {
+  pub fn new(file: &RawSource, tiff: GenericTiffReader, rawloader: &'a RawLoader) -> Result<SrwDecoder<'a>> {
     let camera = rawloader.check_supported(tiff.root_ifd())?;
 
     let makernote = if let Some(exif) = tiff.find_first_ifd_with_tag(ExifTag::MakerNotes) {
-      exif.parse_makernote(file.inner(), OffsetMode::RelativeToIFD, &[])?
+      exif.parse_makernote(&mut file.reader(), OffsetMode::RelativeToIFD, &[])?
     } else {
       warn!("SRW makernote not found");
       None
@@ -70,14 +68,14 @@ impl<'a> SrwDecoder<'a> {
 }
 
 impl<'a> Decoder for SrwDecoder<'a> {
-  fn raw_image(&self, file: &mut RawFile, _params: RawDecodeParams, dummy: bool) -> Result<RawImage> {
+  fn raw_image(&self, file: &RawSource, _params: &RawDecodeParams, dummy: bool) -> Result<RawImage> {
     let raw = self.tiff.find_first_ifd_with_tag(TiffCommonTag::StripOffsets).unwrap();
     let width = fetch_tiff_tag!(raw, TiffCommonTag::ImageWidth).force_usize(0);
     let height = fetch_tiff_tag!(raw, TiffCommonTag::ImageLength).force_usize(0);
     let offset = fetch_tiff_tag!(raw, TiffCommonTag::StripOffsets).force_usize(0);
     let compression = fetch_tiff_tag!(raw, TiffCommonTag::Compression).force_u32(0);
     let bits = fetch_tiff_tag!(raw, TiffCommonTag::BitsPerSample).force_u32(0);
-    let src: OptBuffer = file.subview_until_eof(offset as u64)?.into();
+    let src = file.subview_until_eof_padded(offset as u64)?;
 
     let image = match compression {
       32769 => match bits {
@@ -101,7 +99,7 @@ impl<'a> Decoder for SrwDecoder<'a> {
           let coffset = x.force_usize(0);
           assert!(coffset > 0, "Surely this can't be the start of the file");
           let loffsets = file.subview_until_eof(coffset as u64).unwrap();
-          SrwDecoder::decode_srw1(&src, &loffsets, width, height, dummy)
+          SrwDecoder::decode_srw1(&src, loffsets, width, height, dummy)
         }
       },
       32772 => SrwDecoder::decode_srw2(&src, width, height, dummy),
@@ -110,7 +108,7 @@ impl<'a> Decoder for SrwDecoder<'a> {
         return Err(RawlerError::unsupported(
           &self.camera,
           format!("SRW: Don't know how to handle compression {}", x),
-        ))
+        ));
       }
     };
     let cpp = 1;
@@ -121,7 +119,7 @@ impl<'a> Decoder for SrwDecoder<'a> {
     todo!()
   }
 
-  fn raw_metadata(&self, _file: &mut RawFile, _params: RawDecodeParams) -> Result<RawMetadata> {
+  fn raw_metadata(&self, _file: &RawSource, _params: &RawDecodeParams) -> Result<RawMetadata> {
     let exif = Exif::new(self.tiff.root_ifd())?;
     let mdata = RawMetadata::new_with_lens(&self.camera, exif, self.get_lens_description()?.cloned());
     Ok(mdata)
@@ -168,11 +166,7 @@ impl<'a> SrwDecoder<'a> {
             out[img_up + col + c]
           } else {
             // Left to right prediction
-            if col == 0 {
-              128
-            } else {
-              out[img + col - 2]
-            }
+            if col == 0 { 128 } else { out[img + col - 2] }
           };
           if col + c < width {
             // No point in decoding pixels outside the image
@@ -188,11 +182,7 @@ impl<'a> SrwDecoder<'a> {
             out[img_up2 + col + c]
           } else {
             // Left to right prediction
-            if col == 0 {
-              128
-            } else {
-              out[img + col - 1]
-            }
+            if col == 0 { 128 } else { out[img + col - 1] }
           };
           if col + c < width {
             // No point in decoding pixels outside the image
@@ -364,11 +354,7 @@ impl<'a> SrwDecoder<'a> {
         scale = if (optflags & OPT_QP) == 0 && (col & 63) == 0 {
           let scalevals: [i32; 3] = [0, -2, 2];
           let i = pump.get_bits(2) as usize;
-          if i < 3 {
-            scale + scalevals[i]
-          } else {
-            pump.get_bits(12) as i32
-          }
+          if i < 3 { scale + scalevals[i] } else { pump.get_bits(12) as i32 }
         } else {
           scale // Keep value from previous iteration
         };
@@ -475,7 +461,10 @@ impl<'a> SrwDecoder<'a> {
   fn get_lens_description(&self) -> Result<Option<&'static LensDescription>> {
     if let Some(lens_id) = self.makernote.get_entry(SrwMakernote::LensModel) {
       let lens_id = lens_id.force_u16(0);
-      let resolver = LensResolver::new().with_lens_id((lens_id.into(), 0)).with_mounts(&[NX_MOUNT.into()]);
+      let resolver = LensResolver::new()
+        .with_lens_id((lens_id.into(), 0))
+        .with_camera(&self.camera)
+        .with_mounts(&[NX_MOUNT.into()]);
       return Ok(resolver.resolve());
     }
     Ok(None)
@@ -492,7 +481,7 @@ impl<'a> SrwDecoder<'a> {
         (rggb_levels.force_u32(0) as f32 - rggb_blacks.force_u32(0) as f32) / 4096.0,
         (rggb_levels.force_u32(1) as f32 - rggb_blacks.force_u32(1) as f32) / 4096.0,
         (rggb_levels.force_u32(3) as f32 - rggb_blacks.force_u32(3) as f32) / 4096.0,
-        NAN,
+        f32::NAN,
       ])
     }
   }

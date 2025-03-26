@@ -24,7 +24,7 @@ pub fn get_lenses() -> &'static Vec<LensDescription> {
 /// Resolver for Lens information
 #[derive(Default, Debug, Clone)]
 pub struct LensResolver {
-  /// Name of the lens model, if known
+  /// Unique lens keyname, if known
   lens_keyname: Option<String>,
   /// Name of the lens make, if known
   lens_make: Option<String>,
@@ -84,6 +84,11 @@ impl LensResolver {
   pub fn with_camera(mut self, camera: &Camera) -> Self {
     self.camera_make = Some(camera.clean_make.clone());
     self.camera_model = Some(camera.clean_model.clone());
+    // For cameras with fixed lens, an optional camera param can be specified
+    // which is the key into the lens database.
+    if let Some(key) = camera.param_str("fixed_lens_key").map(String::from) {
+      self.lens_keyname = Some(key);
+    }
     self
   }
 
@@ -185,8 +190,10 @@ impl LensResolver {
         _ => None,
       };
       if second_try.is_none() {
-        log::warn!("Unable to find lens definition. {}", crate::ISSUE_HINT);
-        log::debug!("Lens parameters: {}", self);
+        log::warn!("No lens definition found in database, search parameters: {}. {}", self, crate::ISSUE_HINT);
+        if std::env::var("RAWLER_FAIL_NO_LENS").ok().map(|val| val == "1").unwrap_or(false) {
+          panic!("No lens definition found in database, search parameters: {}.", self);
+        }
       }
       second_try
     }
@@ -219,26 +226,26 @@ impl LensResolver {
 
     let matches: Vec<&LensDescription> = LENSES_DB
       .iter()
-      .filter(|entry| self.mounts.as_ref().map_or(true, |mounts| mounts.contains(&entry.mount)))
+      .filter(|entry| self.mounts.as_ref().is_none_or(|mounts| mounts.contains(&entry.mount)))
       .filter(|entry| {
         self
           .lens_id
           .as_ref()
-          .map_or(true, |id| entry.identifiers.id.as_ref().map_or(false, |entry_id| *entry_id == *id))
+          .is_none_or(|id| entry.identifiers.id.as_ref().is_some_and(|entry_id| *entry_id == *id))
       })
-      .filter(|entry| self.lens_make.as_ref().map_or(true, |make| entry.lens_make == *make))
-      .filter(|entry| self.lens_model.as_ref().map_or(true, |model| entry.lens_model == *model))
+      .filter(|entry| self.lens_make.as_ref().is_none_or(|make| entry.lens_make == *make))
+      .filter(|entry| self.lens_model.as_ref().is_none_or(|model| entry.lens_model == *model))
       .filter(|entry| {
         self
           .focal_len
           .as_ref()
-          .map_or(true, |focal| *focal >= entry.focal_range[0] && *focal <= entry.focal_range[1])
+          .is_none_or(|focal| *focal >= entry.focal_range[0] && *focal <= entry.focal_range[1])
       })
       .filter(|entry| {
         self
           .aperture
           .as_ref()
-          .map_or(true, |ap| *ap >= entry.aperture_range[0] || *ap <= entry.aperture_range[1])
+          .is_none_or(|ap| *ap >= entry.aperture_range[0] || *ap <= entry.aperture_range[1])
       })
       .collect();
     match matches.len() {
@@ -262,25 +269,26 @@ impl LensResolver {
 
 impl Display for LensResolver {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    let mut s = Vec::new();
     if let Some(mount) = &self.mounts {
-      f.write_fmt(format_args!("Mounts: {:?}", mount))?;
+      s.push(format!("Mounts: {:?}", mount));
     }
     if let Some(id) = &self.lens_id {
-      f.write_fmt(format_args!("ID: {}:{}", id.0, id.1))?;
+      s.push(format!("ID: '{}:{}'", id.0, id.1));
     }
     if let Some(name) = &self.lens_keyname {
-      f.write_fmt(format_args!("Keyname: {}", name))?;
+      s.push(format!("Keyname: '{}'", name));
     }
     if let Some(name) = &self.lens_make {
-      f.write_fmt(format_args!("Make: {}", name))?;
+      s.push(format!("Make: '{}", name));
     }
     if let Some(name) = &self.lens_model {
-      f.write_fmt(format_args!("Model: {}", name))?;
+      s.push(format!("Model: '{}'", name));
     }
     if let Some(name) = &self.focal_len {
-      f.write_fmt(format_args!("Focal len: {}", name))?;
+      s.push(format!("Focal len: '{}'", name));
     }
-    Ok(())
+    if s.is_empty() { f.write_str("<EMPTY>") } else { f.write_str(&s.join(", ")) }
   }
 }
 

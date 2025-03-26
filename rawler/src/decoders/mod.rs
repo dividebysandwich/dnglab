@@ -1,3 +1,6 @@
+use chrono::FixedOffset;
+use chrono::NaiveDateTime;
+use chrono::TimeZone;
 use image::DynamicImage;
 use log::debug;
 use log::warn;
@@ -6,29 +9,29 @@ use rayon::iter::ParallelIterator;
 use rayon::slice::ParallelSliceMut;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fs::File;
 use std::hash::Hash;
-use std::io::BufReader;
-use std::io::SeekFrom;
 use std::panic;
 use std::panic::AssertUnwindSafe;
 use std::path::Path;
 use std::rc::Rc;
+use std::str::FromStr;
+use std::sync::Arc;
+use std::time::SystemTime;
 use toml::Value;
 
+use crate::Result;
 use crate::alloc_image_ok;
 use crate::analyze::FormatDump;
 use crate::exif::Exif;
 use crate::formats::ciff;
 use crate::formats::jfif;
-use crate::formats::tiff::reader::TiffReader;
 use crate::formats::tiff::GenericTiffReader;
 use crate::formats::tiff::IFD;
+use crate::formats::tiff::reader::TiffReader;
 use crate::lens::LensDescription;
 use crate::pixarray::PixU16;
+use crate::rawsource::RawSource;
 use crate::tags::DngTag;
-use crate::RawFile;
-use crate::Result;
 
 macro_rules! fetch_ciff_tag {
   ($tiff:expr, $tag:expr) => {
@@ -90,6 +93,7 @@ pub mod nkd;
 pub mod nrw;
 pub mod orf;
 pub mod pef;
+pub mod qtk;
 pub mod raf;
 pub mod rw2;
 pub mod srw;
@@ -99,11 +103,11 @@ pub mod x3f;
 
 pub use camera::Camera;
 
+use crate::RawlerError;
 use crate::alloc_image;
 use crate::formats::bmff::Bmff;
 use crate::tags::ExifTag;
 use crate::tags::TiffCommonTag;
-use crate::RawlerError;
 
 pub use super::rawimage::*;
 
@@ -111,9 +115,9 @@ pub static CAMERAS_TOML: &str = include_str!(concat!(env!("OUT_DIR"), "/cameras.
 pub static SAMPLE: &str = "\nPlease submit samples at https://raw.pixls.us/";
 pub static BUG: &str = "\nPlease file a bug with a sample file at https://github.com/dnglab/dnglab/issues";
 
-const SUPPORTED_FILES_EXT: [&str; 27] = [
+const SUPPORTED_FILES_EXT: [&str; 28] = [
   "ARI", "ARW", "CR2", "CR3", "CRM", "CRW", "DCR", "DCS", "DNG", "ERF", "IIQ", "KDC", "MEF", "MOS", "MRW", "NEF", "NRW", "ORF", "PEF", "RAF", "RAW", "RW2",
-  "RWL", "SRW", "3FR", "FFF", "X3F",
+  "RWL", "SRW", "3FR", "FFF", "X3F", "QTK",
 ];
 
 /// Get list of supported file extensions. All names
@@ -126,9 +130,34 @@ pub trait Readable: std::io::Read + std::io::Seek {}
 
 pub type ReadableBoxed = Box<dyn Readable>;
 
-#[derive(Default, Clone, Debug)]
+#[derive(Default, Clone, Debug, Hash, Eq, PartialEq)]
 pub struct RawDecodeParams {
   pub image_index: usize,
+}
+
+#[derive(Default, Debug, Clone)]
+struct DecoderCache<T>
+where
+  T: Default + Clone,
+{
+  cache: Arc<std::sync::RwLock<HashMap<RawDecodeParams, T>>>,
+}
+
+impl<T> DecoderCache<T>
+where
+  T: Default + Clone,
+{
+  fn new() -> Self {
+    Self::default()
+  }
+
+  fn get(&self, params: &RawDecodeParams) -> Option<T> {
+    self.cache.read().expect("DecoderCache is poisoned").get(params).cloned()
+  }
+
+  fn set(&self, params: &RawDecodeParams, value: T) {
+    self.cache.write().expect("DecoderCache is poisoned").insert(params.clone(), value);
+  }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -165,6 +194,7 @@ pub enum FormatHint {
   NRW,
   ORF,
   PEF,
+  QTK,
   SRW,
   TFR,
   X3F,
@@ -211,10 +241,58 @@ impl RawMetadata {
       rating: None,
     }
   }
+
+  pub fn last_modified(&self) -> Result<Option<SystemTime>> {
+    let mtime = self
+      .exif
+      .modify_date
+      .as_ref()
+      .map(|mtime| NaiveDateTime::parse_from_str(mtime, "%Y:%m:%d %H:%M:%S"))
+      .transpose()
+      .map_err(|err| RawlerError::DecoderFailed(err.to_string()))?;
+    if let Some(mtime) = mtime {
+      // Probe for available timezone information
+      let tz = if let Some(offset) = self.exif.timezone_offset.as_ref().and_then(|x| x.get(1)) {
+        if let Some(tz) = FixedOffset::east_opt(*offset as i32 * 3600) {
+          Some(tz)
+        } else {
+          log::warn!("TZ Offset overflow");
+          None
+        }
+      } else if let Some(offset) = &self.exif.offset_time {
+        match FixedOffset::from_str(offset) {
+          Ok(tz) => Some(tz),
+          Err(err) => {
+            log::warn!("Invalid fixed offset: {}", err);
+            None
+          }
+        }
+      } else {
+        None
+      };
+      // Any timezone? Then correct...
+      if let Some(tz) = tz {
+        let x = tz
+          .from_local_datetime(&mtime)
+          .earliest()
+          .ok_or(RawlerError::DecoderFailed(format!("Failed to convert datetime to local: {:?}", mtime)))?;
+        return Ok(Some(x.into()));
+      } else {
+        match chrono::Local.from_local_datetime(&mtime).earliest() {
+          Some(ts) => return Ok(Some(ts.into())),
+          None => {
+            log::warn!("Failed to convert ts to local time");
+          }
+        }
+      }
+    }
+
+    Ok(None)
+  }
 }
 
 pub trait Decoder: Send {
-  fn raw_image(&self, file: &mut RawFile, params: RawDecodeParams, dummy: bool) -> Result<RawImage>;
+  fn raw_image(&self, file: &RawSource, params: &RawDecodeParams, dummy: bool) -> Result<RawImage>;
 
   fn raw_image_count(&self) -> Result<usize> {
     Ok(1)
@@ -222,25 +300,25 @@ pub trait Decoder: Send {
 
   /// Gives the metadata for a Raw. This is not the original data but
   /// a generalized set of metadata attributes.
-  fn raw_metadata(&self, file: &mut RawFile, params: RawDecodeParams) -> Result<RawMetadata>;
+  fn raw_metadata(&self, file: &RawSource, params: &RawDecodeParams) -> Result<RawMetadata>;
 
-  fn xpacket(&self, _file: &mut RawFile, _params: RawDecodeParams) -> Result<Option<Vec<u8>>> {
+  fn xpacket(&self, _file: &RawSource, _params: &RawDecodeParams) -> Result<Option<Vec<u8>>> {
     Ok(None)
   }
 
   // TODO: extend with decode params for image index
-  fn thumbnail_image(&self, _file: &mut RawFile) -> Result<Option<DynamicImage>> {
+  fn thumbnail_image(&self, _file: &RawSource, _params: &RawDecodeParams) -> Result<Option<DynamicImage>> {
     warn!("Decoder has no thumbnail image support, fallback to preview image");
     Ok(None)
   }
 
   // TODO: clarify preview and full image
-  fn preview_image(&self, _file: &mut RawFile) -> Result<Option<DynamicImage>> {
+  fn preview_image(&self, _file: &RawSource, _params: &RawDecodeParams) -> Result<Option<DynamicImage>> {
     warn!("Decoder has no preview image support");
     Ok(None)
   }
 
-  fn full_image(&self, _file: &mut RawFile) -> Result<Option<DynamicImage>> {
+  fn full_image(&self, _file: &RawSource, _params: &RawDecodeParams) -> Result<Option<DynamicImage>> {
     warn!("Decoder has no full image support");
     Ok(None)
   }
@@ -461,18 +539,7 @@ impl RawLoader {
   }
 
   /// Returns a decoder for a given buffer
-  pub fn get_decoder<'b>(&'b self, rawfile: &mut RawFile) -> Result<Box<dyn Decoder + 'b>> {
-    macro_rules! reset_file {
-      ($file:ident) => {
-        $file
-          .inner()
-          .seek(SeekFrom::Start(0))
-          .map_err(|e| RawlerError::with_io_error("get_decoder(): failed to seek", &rawfile.path, e))?;
-      };
-    }
-
-    //let buffer = rawfile.get_buf().unwrap();
-
+  pub fn get_decoder<'b>(&'b self, rawfile: &RawSource) -> Result<Box<dyn Decoder + 'b>> {
     if mrw::is_mrw(rawfile) {
       let dec = Box::new(mrw::MrwDecoder::new(rawfile, self)?);
       return Ok(dec as Box<dyn Decoder>);
@@ -488,18 +555,18 @@ impl RawLoader {
       return Ok(dec as Box<dyn Decoder>);
     }
 
+    if qtk::is_qtk(rawfile) {
+      let dec = Box::new(qtk::QtkDecoder::new(rawfile, self)?);
+      return Ok(dec as Box<dyn Decoder>);
+    }
+
     if ciff::is_ciff(rawfile) {
       let dec = Box::new(crw::CrwDecoder::new(rawfile, self)?);
       return Ok(dec as Box<dyn Decoder>);
     }
-    if jfif::is_jfif(rawfile) {
-      reset_file!(rawfile);
-    }
 
     if jfif::is_exif(rawfile) {
-      reset_file!(rawfile);
       let exif = jfif::Jfif::new(rawfile)?;
-
       if let Some(make) = exif
         .exif_ifd()
         .and_then(|ifd| ifd.get_entry(TiffCommonTag::Make))
@@ -522,8 +589,7 @@ impl RawLoader {
       return Ok(dec as Box<dyn Decoder>);
     }
 
-    reset_file!(rawfile);
-    match Bmff::new(rawfile.inner()) {
+    match Bmff::new(&mut rawfile.reader()) {
       Ok(bmff) => {
         if bmff.compatible_brand("crx ") {
           return Ok(Box::new(cr3::Cr3Decoder::new(rawfile, bmff, self)?));
@@ -534,8 +600,7 @@ impl RawLoader {
       }
     }
 
-    reset_file!(rawfile);
-    match GenericTiffReader::new(rawfile.inner(), 0, 0, None, &[]) {
+    match GenericTiffReader::new(&mut rawfile.reader(), 0, 0, None, &[]) {
       Ok(tiff) => {
         debug!("File is is TIFF file!");
 
@@ -651,13 +716,13 @@ impl RawLoader {
     self.check_supported_with_mode(ifd0, "")
   }
 
-  fn decode_unsafe(&self, rawfile: &mut RawFile, params: RawDecodeParams, dummy: bool) -> Result<RawImage> {
+  fn decode_unsafe(&self, rawfile: &RawSource, params: &RawDecodeParams, dummy: bool) -> Result<RawImage> {
     let decoder = self.get_decoder(rawfile)?;
     decoder.raw_image(rawfile, params, dummy)
   }
 
   /// Decodes an input into a RawImage
-  pub fn decode(&self, rawfile: &mut RawFile, params: RawDecodeParams, dummy: bool) -> Result<RawImage> {
+  pub fn decode(&self, rawfile: &RawSource, params: &RawDecodeParams, dummy: bool) -> Result<RawImage> {
     //let buffer = Buffer::new(reader)?;
 
     match panic::catch_unwind(AssertUnwindSafe(|| self.decode_unsafe(rawfile, params, dummy))) {
@@ -668,30 +733,21 @@ impl RawLoader {
 
   /// Decodes a file into a RawImage
   pub fn decode_file(&self, path: &Path) -> Result<RawImage> {
-    let file = match File::open(path) {
-      Ok(val) => val,
-      Err(e) => return Err(RawlerError::with_io_error("decode_file()", path, e)),
-    };
-    let mut buffered_file = RawFile::from(BufReader::new(file));
-    self.decode(&mut buffered_file, RawDecodeParams::default(), false)
+    let rawfile = RawSource::new(path)?;
+    self.decode(&rawfile, &RawDecodeParams::default(), false)
   }
 
   /// Decodes a file into a RawImage
   pub fn raw_image_count_file(&self, path: &Path) -> Result<usize> {
-    let file = match File::open(path) {
-      Ok(val) => val,
-      Err(e) => return Err(RawlerError::with_io_error("raw_image_count_file()", path, e)),
-    };
-    let buffered_file = BufReader::new(file);
-    //let buffer = Buffer::new(&mut buffered_file)?;
-    let decoder = self.get_decoder(&mut buffered_file.into())?;
+    let rawfile = RawSource::new(path).map_err(|err| RawlerError::with_io_error("raw_image_count_file()", path, err))?;
+    let decoder = self.get_decoder(&rawfile)?;
     decoder.raw_image_count()
   }
 
   // Decodes an unwrapped input (just the image data with minimal metadata) into a RawImage
   // This is only useful for fuzzing really
   #[doc(hidden)]
-  pub fn decode_unwrapped(&self, rawfile: &mut RawFile) -> Result<RawImageData> {
+  pub fn decode_unwrapped(&self, rawfile: &RawSource) -> Result<RawImageData> {
     match panic::catch_unwind(AssertUnwindSafe(|| unwrapped::decode_unwrapped(rawfile))) {
       Ok(val) => val,
       Err(_) => Err(RawlerError::DecoderFailed(format!("Caught a panic while decoding.{}", BUG))),

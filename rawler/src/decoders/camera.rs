@@ -1,9 +1,9 @@
 use toml::Value;
 
+use crate::CFA;
 use crate::cfa::PlaneColor;
 use crate::imgop::xyz::FlatColorMatrix;
 use crate::imgop::xyz::Illuminant;
-use crate::CFA;
 
 use std::collections::HashMap;
 
@@ -273,7 +273,7 @@ impl Camera {
       crop_area: None,
       bps: None,
       real_bps: 16,
-      highres_width: usize::max_value(),
+      highres_width: usize::MAX,
       default_scale: DefaultScale::default(),
       best_quality_scale: BestQualityScale::default(),
       hints: Vec::new(),

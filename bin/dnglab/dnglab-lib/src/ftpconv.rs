@@ -5,16 +5,18 @@ use clap::ArgMatches;
 use embedftp::config::{Config, FtpCallback};
 use embedftp::server::serve;
 use rawler::decoders::supported_extensions;
+use rawler::rawsource::RawSource;
 use std::ffi::OsStr;
 use std::fs::File;
-use std::io::{BufWriter, Cursor};
+use std::io::BufWriter;
 use std::path::{Path, PathBuf};
-use std::rc::Rc;
+use std::sync::Arc;
 
 use tokio::runtime::Handle;
 
+use crate::jobs::raw2dng::copy_mtime_from_rawsource;
 use crate::{PKG_NAME, PKG_VERSION};
-use rawler::dng::convert::{convert_raw_stream, ConvertParams};
+use rawler::dng::convert::{ConvertParams, convert_raw_source};
 
 #[derive(Clone)]
 struct FtpState {
@@ -23,14 +25,19 @@ struct FtpState {
 }
 
 impl FtpCallback for FtpState {
-  fn stor_file(&self, path: &Path, data: Rc<[u8]>) -> std::io::Result<bool> {
+  fn stor_file(&self, path: &Path, data: Arc<Vec<u8>>) -> std::io::Result<bool> {
     if let Some(ext) = path.extension().map(|ext| ext.to_string_lossy()) {
       if is_ext_supported(ext) {
-        let raw_stream = Cursor::new(data);
         let original_filename = path.file_name().and_then(OsStr::to_str).unwrap_or_default();
+        let rawfile = RawSource::new_from_shared_vec(data).with_path(original_filename);
         let out_path = path.with_extension("dng");
         let mut dng = BufWriter::new(File::create(out_path)?);
-        convert_raw_stream(raw_stream, &mut dng, original_filename, &self.params).map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
+        convert_raw_source(&rawfile, &mut dng, original_filename, &self.params).map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
+        if self.params.keep_mtime {
+          if let Err(err) = copy_mtime_from_rawsource(&rawfile, &dng.into_inner().expect("Get inner() failed"), None, &self.params) {
+            log::warn!("Failed to set mtime, continue anyway: {}", err);
+          }
+        }
         return Ok(!self.keep_orig);
       }
     }
@@ -54,6 +61,7 @@ pub async fn ftpserver(options: &ArgMatches) -> crate::Result<()> {
     software: format!("{} {}", PKG_NAME, PKG_VERSION),
     index: 0,
     apply_scaling: false,
+    keep_mtime: options.get_flag("keep_mtime"),
   };
   let keep_orig = options.get_flag("keep_orig");
 

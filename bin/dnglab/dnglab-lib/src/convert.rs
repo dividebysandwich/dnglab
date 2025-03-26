@@ -10,9 +10,9 @@ use std::path::PathBuf;
 use std::time::Instant;
 
 use crate::filemap::{FileMap, MapMode};
-use crate::jobs::raw2dng::{JobResult, Raw2DngJob};
 use crate::jobs::Job;
-use crate::{AppError, Result, PKG_VERSION};
+use crate::jobs::raw2dng::{JobResult, Raw2DngJob};
+use crate::{AppError, PKG_VERSION, Result};
 use rawler::dng::convert::ConvertParams;
 
 /// Entry point for Clap sub command `convert`
@@ -114,6 +114,7 @@ fn generate_job(entry: &FileMap, options: &ArgMatches) -> Result<Vec<Raw2DngJob>
       software: format!("{} {}", "DNGLab", PKG_VERSION),
       index: if do_batch { i } else { index },
       apply_scaling: false,
+      keep_mtime: options.get_flag("keep_mtime"),
     };
 
     let input = PathBuf::from(&entry.src);

@@ -17,7 +17,7 @@ use crate::{
   tags::{ExifGpsTag, ExifTag, TiffTag},
 };
 
-use super::{Entry, Result, TiffError, Value, TIFF_MAGIC};
+use super::{Entry, Result, TIFF_MAGIC, TiffError, Value};
 
 pub struct TiffWriter<W> {
   ifd_location: u64,
@@ -172,6 +172,10 @@ impl DirectoryWriter {
         embedded: None,
       },
     );
+  }
+
+  pub fn contains<T: TiffTag>(&self, tag: T) -> bool {
+    self.entries.contains_key(&tag.into())
   }
 
   pub fn copy<'a>(&mut self, iter: impl Iterator<Item = (&'a u16, &'a Value)>) {
@@ -373,11 +377,7 @@ impl crate::decoders::RawMetadata {
         transfer_entry(&mut gps_ifd, ExifGpsTag::GPSDateStamp, &gps.gps_date_stamp)?;
         transfer_entry(&mut gps_ifd, ExifGpsTag::GPSDifferential, &gps.gps_differential)?;
         transfer_entry(&mut gps_ifd, ExifGpsTag::GPSHPositioningError, &gps.gps_h_positioning_error)?;
-        if gps_ifd.entry_count() > 0 {
-          Some(gps_ifd.build(tiff)?)
-        } else {
-          None
-        }
+        if gps_ifd.entry_count() > 0 { Some(gps_ifd.build(tiff)?) } else { None }
       };
       if let Some(gps_offset) = gps_offset {
         root_ifd.add_tag(ExifTag::GPSInfo, [gps_offset]);

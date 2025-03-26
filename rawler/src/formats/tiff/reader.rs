@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright 2021 Daniel Vogelbacher <daniel@chaospixel.com>
 
-use super::{apply_corr, entry::RawEntry, file::TiffFile, Entry, Result, TiffError, IFD};
+use super::{Entry, IFD, Result, TiffError, apply_corr, entry::RawEntry, file::TiffFile};
 use crate::{
   bits::Endian,
   tags::{ExifTag, TiffCommonTag, TiffTag},
@@ -48,7 +48,7 @@ pub trait TiffReader {
     None
   }
 
-  fn get_entry_raw<'a, T: TiffTag, R: Read + Seek>(&'a self, tag: T, file: &mut R) -> Result<Option<RawEntry>> {
+  fn get_entry_raw<'a, T: TiffTag, R: Read + Seek>(&'a self, tag: T, file: &mut R) -> Result<Option<RawEntry<'a>>> {
     for ifd in &self.file().chain {
       if let Some(entry) = ifd.get_entry_raw(tag, file)? {
         return Ok(Some(entry));
@@ -94,11 +94,7 @@ pub trait TiffReader {
 
   fn find_first_ifd_with_tag<T: TiffTag>(&self, tag: T) -> Option<&IFD> {
     let ifds = self.find_ifds_with_tag(tag);
-    if ifds.is_empty() {
-      None
-    } else {
-      Some(ifds[0])
-    }
+    if ifds.is_empty() { None } else { Some(ifds[0]) }
   }
 
   fn get_first_entry(&self, _tag: u16) -> Option<Entry> {

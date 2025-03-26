@@ -1,3 +1,5 @@
+cameras/Apple/QuickTake 100/raw_modes
+cameras/Apple/QuickTake 150/raw_modes
 cameras/Canon/EOS 1000D/raw_modes
 cameras/Canon/EOS 100D/raw_modes
 cameras/Canon/EOS 10D/raw_modes
@@ -211,6 +213,8 @@ cameras/Phase One/iXM-RS150F/raw_modes
 cameras/Phase One/P65/raw_modes
 cameras/Phase One/P20/raw_modes
 cameras/Phase One/P25/raw_modes
+cameras/Phase One/P25+/raw_modes
+cameras/Phase One/P45+/raw_modes
 cameras/Nikon/D3500/raw_modes
 cameras/Nikon/1 V2/raw_modes
 cameras/Nikon/D40X/raw_modes
@@ -397,6 +401,7 @@ cameras/Sony/ZV-1/raw_modes
 cameras/Sony/ZV-E1/raw_modes
 cameras/Sony/ZV-E10/raw_modes
 cameras/Sony/ZV-E10M2/raw_modes
+cameras/Sony/UMC-R10C/raw_modes
 cameras/Epson/R-D1/raw_modes
 cameras/Epson/R-D1s/raw_modes
 cameras/Epson/R-D1x/raw_modes
@@ -450,6 +455,7 @@ cameras/Samsung/NX500/raw_modes
 cameras/Samsung/NX mini/raw_modes
 cameras/Samsung/WB2000/raw_modes
 cameras/Kodak/DC120/raw_modes
+cameras/Kodak/DC50/raw_modes
 cameras/Kodak/DCS460D/raw_modes
 cameras/Kodak/DCS560C/raw_modes
 cameras/Kodak/DCS760C/raw_modes

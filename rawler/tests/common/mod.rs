@@ -3,10 +3,10 @@
 
 //#[cfg(feature = "samplecheck")]
 use md5::Digest;
-use rawler::dng::convert::convert_raw_file;
 use rawler::dng::convert::ConvertParams;
+use rawler::dng::convert::convert_raw_file;
 use rawler::{
-  analyze::{analyze_metadata, extract_raw_pixels, AnalyzerResult},
+  analyze::{AnalyzerResult, analyze_metadata, extract_raw_pixels},
   decoders::RawDecodeParams,
 };
 use std::{
@@ -80,7 +80,7 @@ pub(crate) fn check_camera_raw_file_conversion(make: &str, model: &str, sample: 
   // Validate pixel data
   let old_digest_str = std::fs::read_to_string(digest_file)?;
   let old_digest = Digest(TryInto::<[u8; 16]>::try_into(hex::decode(old_digest_str.trim()).expect("Malformed MD5 digest")).expect("Must be [u8; 16]"));
-  let (_, _, _cpp, buf) = extract_raw_pixels(&raw_file, RawDecodeParams::default()).unwrap();
+  let (_, _, _cpp, buf) = extract_raw_pixels(&raw_file, &RawDecodeParams::default()).unwrap();
   let v: Vec<u8> = buf.iter().flat_map(|p| p.to_le_bytes()).collect();
   let new_digest = md5::compute(v);
   assert_eq!(old_digest, new_digest, "Old and new raw pixel digest not match!");

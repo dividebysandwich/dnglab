@@ -4,9 +4,9 @@
 use std::path::PathBuf;
 
 use clap::{
-  arg,
+  ArgAction, Command, arg,
   builder::{NonEmptyStringValueParser, ValueParser},
-  command, value_parser, ArgAction, Command,
+  command, value_parser,
 };
 use log::debug;
 use rawler::dng::{CropMode, DngCompression};
@@ -15,6 +15,31 @@ use crate::makedng::{
   CalibrationIlluminantArgParser, ColorMatrixArgParser, DngColorimetricReference, DngVersion, InputSourceUsageMap, LinearizationTableArgParser,
   WhiteBalanceInput, WhitePointArgParser,
 };
+
+#[derive(Clone, Debug, Copy, Eq, PartialEq, PartialOrd, Ord)]
+pub enum LogLevel {
+  Error,
+  Warn,
+  Info,
+  Debug,
+  Trace,
+}
+
+impl clap::ValueEnum for LogLevel {
+  fn value_variants<'a>() -> &'a [Self] {
+    &[Self::Error, Self::Warn, Self::Info, Self::Debug, Self::Trace]
+  }
+
+  fn to_possible_value(&self) -> Option<clap::builder::PossibleValue> {
+    Some(match self {
+      Self::Error => clap::builder::PossibleValue::new("error"),
+      Self::Warn => clap::builder::PossibleValue::new("warn"),
+      Self::Info => clap::builder::PossibleValue::new("info"),
+      Self::Debug => clap::builder::PossibleValue::new("debug"),
+      Self::Trace => clap::builder::PossibleValue::new("trace"),
+    })
+  }
+}
 
 pub fn create_app() -> Command {
   debug!("Creating CLAP app configuration");
@@ -60,6 +85,13 @@ pub fn create_app() -> Command {
         .value_parser(NonEmptyStringValueParser::new()),
     )
     .arg(
+      arg!(keep_mtime: --"keep-mtime" <keepmtime> "Keep mtime, read from EXIF with fallback to original file mtime")
+        .value_parser(ValueParser::bool())
+        .required(false)
+        .default_value("false")
+        .default_missing_value("false"),
+    )
+    .arg(
       arg!(index: --"image-index" <index> "Select a specific image index (or 'all') if file is a image container")
         .required(false)
         .default_value("0"),
@@ -76,8 +108,14 @@ pub fn create_app() -> Command {
     .about("DNGLab - A camera raw utility and DNG converter")
     .subcommand_required(true)
     .arg_required_else_help(true)
-    .arg(arg!(debug: -d ... "turns on debugging mode").global(true))
-    .arg(arg!(verbose: -v "Print more messages").global(true).action(ArgAction::SetTrue))
+    .arg(
+      arg!(loglevel: -d --loglevel <level> "Log level")
+        .global(true)
+        .required(false)
+        .value_parser(value_parser!(LogLevel))
+        .default_value("warn"),
+    )
+    .arg(arg!(verbose: -v "Print status for every file").global(true).action(ArgAction::SetTrue))
     .subcommand(
       Command::new("analyze")
         .about("Analyze raw image")

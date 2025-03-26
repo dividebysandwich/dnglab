@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        rust: [nightly, beta, stable, 1.76.0]
+        rust: [nightly, beta, stable, 1.85.0]
     steps:
       - uses: actions/checkout@v2
       - uses: dtolnay/rust-toolchain@master
@@ -28,9 +28,9 @@ jobs:
   build-all-features:
     name: Rust all-features ${{matrix.rust}}
     runs-on: ubuntu-20.04
-    strategy: 
+    strategy:
       fail-fast: false
-      matrix: 
+      matrix:
         rust: [stable]
     steps:
       - uses: actions/checkout@v2
@@ -46,9 +46,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        rust: [1.76.0, stable, beta]
+        rust: [1.85.0]
     env:
       RAWLER_RAWDB: /opt/rawdb2
+      RAYON_NUM_THREADS: 4
     steps:
       - uses: actions/checkout@v2
       - uses: dtolnay/rust-toolchain@master
@@ -72,7 +73,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo build --release
       - name: Upload build artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: dnglab.exe
           path: 'target/release/dnglab.exe'
@@ -85,7 +86,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo build --release
       - name: Upload build artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: dnglab_x64
           path: 'target/release/dnglab'
@@ -106,7 +107,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo build --release
       - name: Upload build artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: dnglab_arm64
           path: 'target/release/dnglab'

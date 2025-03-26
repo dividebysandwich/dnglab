@@ -4,24 +4,23 @@
 use image::DynamicImage;
 use log::{debug, warn};
 use std::convert::{TryFrom, TryInto};
-use std::f32::NAN;
 use std::fmt::Debug;
 
 use crate::bits::Endian;
+use crate::decoders::*;
 use crate::decompressors::crx::decompress_crx_image;
 use crate::envparams::{rawler_crx_raw_trak, rawler_ignore_previews};
 use crate::exif::ExifGPS;
+use crate::formats::bmff::FileBox;
 use crate::formats::bmff::ext_cr3::cmp1::Cmp1Box;
 use crate::formats::bmff::ext_cr3::cr3desc::Cr3DescBox;
 use crate::formats::bmff::ext_cr3::iad1::{Iad1Box, Iad1Type};
 use crate::formats::bmff::trak::TrakBox;
-use crate::formats::bmff::FileBox;
 use crate::formats::tiff::reader::TiffReader;
 use crate::formats::tiff::{Entry, GenericTiffReader, Rational, Value};
 use crate::imgop::{Point, Rect};
 use crate::lens::{LensDescription, LensId, LensResolver};
-use crate::{decoders::*, RawFile};
-use crate::{pumps::ByteStream, RawImage};
+use crate::{RawImage, pumps::ByteStream};
 
 const CANON_CN_MOUNT: &str = "cn-mount";
 const CANON_EF_MOUNT: &str = "ef-mount";
@@ -42,6 +41,8 @@ pub struct Cr3Decoder<'a> {
   cmt3: GenericTiffReader,
   // GPS
   cmt4: GenericTiffReader,
+  // Metadata cache
+  md_cache: DecoderCache<Cr3Metadata>,
 }
 
 #[allow(dead_code)]
@@ -81,7 +82,7 @@ enum Cr3ImageType {
 
 impl<'a> Cr3Decoder<'a> {
   /// Construct new CR3 or CRM deocder
-  pub fn new(_rawfile: &mut RawFile, bmff: Bmff, rawloader: &'a RawLoader) -> Result<Cr3Decoder<'a>> {
+  pub fn new(_rawfile: &RawSource, bmff: Bmff, rawloader: &'a RawLoader) -> Result<Cr3Decoder<'a>> {
     if let Some(Cr3DescBox { cmt1, cmt2, cmt3, cmt4, .. }) = bmff.filebox.moov.cr3desc.as_ref() {
       let mode = Self::get_mode(cmt3.tiff.root_ifd())?;
       let camera = rawloader.check_supported_with_mode(cmt1.tiff.root_ifd(), mode)?;
@@ -93,6 +94,7 @@ impl<'a> Cr3Decoder<'a> {
         cmt3: cmt3.tiff.clone(),
         cmt4: cmt4.tiff.clone(),
         bmff,
+        md_cache: DecoderCache::new(),
       };
       Ok(decoder)
     } else {
@@ -137,7 +139,7 @@ impl<'a> Cr3Decoder<'a> {
 
   /// Read CTMD records for given sample
   /// Each sample (for movie files) have their own CTMD records
-  fn read_ctmd(&self, rawfile: &mut RawFile, sample_idx: u32) -> Result<Option<Ctmd>> {
+  fn read_ctmd(&self, rawfile: &RawSource, sample_idx: u32) -> Result<Option<Ctmd>> {
     // Search for a trak which has a CTMD box (there should be only one)
     if let Some(ctmd_trak_index) = self
       .bmff
@@ -160,10 +162,10 @@ impl<'a> Cr3Decoder<'a> {
       debug!("CR3 CTMD mdat offset for sample_idx {}: {}, len: {}", sample_idx, offset, size);
       let buf = rawfile
         .subview(offset as u64, size as u64)
-        .map_err(|e| RawlerError::with_io_error("CR3: failed to read CTMD", &rawfile.path, e))?;
+        .map_err(|e| RawlerError::with_io_error("CR3: failed to read CTMD", rawfile.path(), e))?;
 
       //dump_buf("/tmp/ctmd.buf", &buf);
-      let mut substream = ByteStream::new(&buf, Endian::Little);
+      let mut substream = ByteStream::new(buf, Endian::Little);
       let ctmd = Ctmd::new(&mut substream);
       Ok(Some(ctmd))
     } else {
@@ -186,8 +188,8 @@ impl<'a> Decoder for Cr3Decoder<'a> {
     })
   }
 
-  fn raw_metadata(&self, file: &mut RawFile, params: RawDecodeParams) -> Result<RawMetadata> {
-    let cr3md = self.read_cr3_metadata(file, &params)?;
+  fn raw_metadata(&self, file: &RawSource, params: &RawDecodeParams) -> Result<RawMetadata> {
+    let cr3md = self.read_cr3_metadata(file, params)?;
 
     let mut exif = Exif::default();
     exif.extend_from_ifd(self.cmt1.root_ifd())?;
@@ -235,8 +237,8 @@ impl<'a> Decoder for Cr3Decoder<'a> {
     Ok(mdata)
   }
 
-  fn xpacket(&self, file: &mut RawFile, params: RawDecodeParams) -> Result<Option<Vec<u8>>> {
-    let cr3md = self.read_cr3_metadata(file, &params)?;
+  fn xpacket(&self, file: &RawSource, params: &RawDecodeParams) -> Result<Option<Vec<u8>>> {
+    let cr3md = self.read_cr3_metadata(file, params)?;
     Ok(cr3md.xpacket)
   }
 
@@ -250,7 +252,7 @@ impl<'a> Decoder for Cr3Decoder<'a> {
   }
 
   /// Decode raw image
-  fn raw_image(&self, file: &mut RawFile, params: RawDecodeParams, dummy: bool) -> Result<RawImage> {
+  fn raw_image(&self, file: &RawSource, params: &RawDecodeParams, dummy: bool) -> Result<RawImage> {
     let sample_idx = params.image_index;
     if sample_idx >= self.raw_image_count()? {
       return Err(RawlerError::DecoderFailed(format!(
@@ -260,7 +262,7 @@ impl<'a> Decoder for Cr3Decoder<'a> {
       )));
     }
 
-    let cr3md = self.read_cr3_metadata(file, &params)?;
+    let cr3md = self.read_cr3_metadata(file, params)?;
 
     if let Some(cr3desc) = &self.bmff.filebox.moov.cr3desc {
       for item in cr3desc.cctp.ccdts.iter() {
@@ -279,12 +281,12 @@ impl<'a> Decoder for Cr3Decoder<'a> {
     // Raw data buffer
     let buf = file
       .subview(offset as u64, size as u64)
-      .map_err(|e| RawlerError::with_io_error("CR3: failed to read raw data", &file.path, e))?;
+      .map_err(|e| RawlerError::with_io_error("CR3: failed to read raw data", file.path(), e))?;
 
     let cmp1 = self.cmp1_box(raw_trak_id).ok_or(format!("CMP1 box not found for trak {}", raw_trak_id))?;
     debug!("cmp1 mdat hdr size: {}", cmp1.mdat_hdr_size);
 
-    let mut wb = cr3md.wb.unwrap_or([NAN, NAN, NAN, NAN]);
+    let mut wb = cr3md.wb.unwrap_or([f32::NAN, f32::NAN, f32::NAN, f32::NAN]);
     let whitelevel = cr3md.whitelevel.unwrap_or(u16::MAX);
 
     // Special handling for CRM movie files
@@ -292,16 +294,16 @@ impl<'a> Decoder for Cr3Decoder<'a> {
       if 130 == entry.force_u16(3) {
         // Light Raw
         // WB is already applied, use 1.0
-        wb = [1.0, 1.0, 1.0, NAN];
+        wb = [1.0, 1.0, 1.0, f32::NAN];
       }
       if 131 == entry.force_u16(3) { // Standard Raw
-         // Nothing special for Standard raw
+        // Nothing special for Standard raw
       }
     }
 
     let image = if !dummy {
       PixU16::new_with(
-        decompress_crx_image(&buf, cmp1).map_err(|e| format!("Failed to decode raw: {}", e))?,
+        decompress_crx_image(buf, cmp1).map_err(|e| format!("Failed to decode raw: {}", e))?,
         cmp1.f_width as usize,
         cmp1.f_height as usize,
       )
@@ -385,7 +387,10 @@ impl<'a> Decoder for Cr3Decoder<'a> {
   }
 
   /// Extract preview image embedded in CR3
-  fn full_image(&self, file: &mut RawFile) -> Result<Option<DynamicImage>> {
+  fn full_image(&self, file: &RawSource, params: &RawDecodeParams) -> Result<Option<DynamicImage>> {
+    if params.image_index != 0 {
+      return Ok(None);
+    }
     if rawler_ignore_previews() {
       return Err(RawlerError::DecoderFailed("Unable to extract preview image".into()));
     }
@@ -394,8 +399,8 @@ impl<'a> Decoder for Cr3Decoder<'a> {
     debug!("JPEG preview mdat offset: {}, len: {}", offset, size);
     let buf = file
       .subview(offset as u64, size as u64)
-      .map_err(|e| RawlerError::with_io_error("CR3: failed to read full image data", &file.path, e))?;
-    match image::load_from_memory_with_format(&buf, image::ImageFormat::Jpeg) {
+      .map_err(|e| RawlerError::with_io_error("CR3: failed to read full image data", file.path(), e))?;
+    match image::load_from_memory_with_format(buf, image::ImageFormat::Jpeg) {
       Ok(img) => Ok(Some(img)),
       Err(e) => {
         debug!("TRAK 0 contains no JPEG preview, is it PQ/HEIF? Error: {}", e);
@@ -435,11 +440,15 @@ impl<'a> Cr3Decoder<'a> {
     Ok(None)
   }
 
-  fn read_cr3_metadata(&self, rawfile: &mut RawFile, params: &RawDecodeParams) -> Result<Cr3Metadata> {
+  fn read_cr3_metadata(&self, rawfile: &RawSource, params: &RawDecodeParams) -> Result<Cr3Metadata> {
+    if let Some(md) = self.md_cache.get(params) {
+      return Ok(md);
+    }
     let mut md = Cr3Metadata::default();
 
     let resolver = LensResolver::new()
       .with_lens_keyname(self.read_lens_name()?)
+      .with_camera(&self.camera) // must follow with_lens_keyname() as it my override key
       .with_lens_id(self.read_lens_id()?)
       .with_mounts(&[CANON_CN_MOUNT.into(), CANON_EF_MOUNT.into(), CANON_RF_MOUNT.into()]);
     md.lens_description = resolver.resolve();
@@ -483,8 +492,8 @@ impl<'a> Cr3Decoder<'a> {
       let size = xpacket_box.header.size - xpacket_box.header.header_len;
       let buf = rawfile
         .subview(offset, size)
-        .map_err(|e| RawlerError::with_io_error("CR3: failed to read XPACKET", &rawfile.path, e))?;
-      md.xpacket = Some(buf);
+        .map_err(|e| RawlerError::with_io_error("CR3: failed to read XPACKET", rawfile.path(), e))?;
+      md.xpacket = Some(buf.to_vec());
     }
 
     if let Some(ctmd) = self.read_ctmd(rawfile, params.image_index as u32)? {
@@ -533,6 +542,7 @@ impl<'a> Cr3Decoder<'a> {
     debug!("CR3 blacklevels: {:?}", md.blacklevels);
     debug!("CR3 whitelevel: {:?}", md.whitelevel);
 
+    self.md_cache.set(params, md.clone());
     Ok(md)
   }
 
@@ -677,7 +687,7 @@ fn normalize_wb(raw_wb: [f32; 4]) -> [f32; 4] {
       *v /= div
     }
   });
-  [norm[0], (norm[1] + norm[2]) / 2.0, norm[3], NAN]
+  [norm[0], (norm[1] + norm[2]) / 2.0, norm[3], f32::NAN]
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

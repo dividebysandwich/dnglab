@@ -12,20 +12,22 @@ use rayon::slice::ParallelSliceMut;
 use serde::Deserialize;
 use serde::Serialize;
 use std::convert::TryFrom;
-use std::f32::NAN;
 
+use crate::RawImage;
+use crate::RawLoader;
+use crate::RawlerError;
 use crate::alloc_image_plain;
 use crate::analyze::FormatDump;
-use crate::bits::clampbits;
 use crate::bits::LookupTable;
+use crate::bits::clampbits;
 use crate::decompressors::ljpeg::*;
 use crate::exif::Exif;
-use crate::formats::tiff::reader::TiffReader;
 use crate::formats::tiff::Entry;
 use crate::formats::tiff::GenericTiffReader;
+use crate::formats::tiff::IFD;
 use crate::formats::tiff::Rational;
 use crate::formats::tiff::Value;
-use crate::formats::tiff::IFD;
+use crate::formats::tiff::reader::TiffReader;
 use crate::imgop::Dim2;
 use crate::imgop::Point;
 use crate::imgop::Rect;
@@ -33,12 +35,9 @@ use crate::lens::LensDescription;
 use crate::lens::LensResolver;
 use crate::rawimage::CFAConfig;
 use crate::rawimage::RawPhotometricInterpretation;
+use crate::rawsource::RawSource;
 use crate::tags::ExifTag;
 use crate::tags::TiffCommonTag;
-use crate::RawFile;
-use crate::RawImage;
-use crate::RawLoader;
-use crate::RawlerError;
 
 use super::BlackLevel;
 use super::Camera;
@@ -82,7 +81,7 @@ impl<'a> Decoder for Cr2Decoder<'a> {
     FormatDump::Cr2(Cr2Format { tiff: self.tiff.clone() })
   }
 
-  fn raw_image(&self, file: &mut RawFile, _params: RawDecodeParams, dummy: bool) -> Result<RawImage> {
+  fn raw_image(&self, file: &RawSource, _params: &RawDecodeParams, dummy: bool) -> Result<RawImage> {
     /*
     for (i, ifd) in self.tiff.chains().iter().enumerate() {
       eprintln!("IFD {}", i);
@@ -107,13 +106,10 @@ impl<'a> Decoder for Cr2Decoder<'a> {
     };
 
     // We don't have an excact length, so read until end.
-    let src = file
-      .stream_len()
-      .and_then(|len| file.subview(offset as u64, len - offset as u64))
-      .map_err(|e| RawlerError::with_io_error("CR2: failed to read raw data", &file.path, e))?;
+    let src = file.subview_until_eof(offset as u64)?;
 
     let (cpp, image) = {
-      let decompressor = LjpegDecompressor::new(&src)?;
+      let decompressor = LjpegDecompressor::new(src)?;
       let ljpegwidth = decompressor.width();
       let mut width = ljpegwidth;
       let mut height = decompressor.height();
@@ -296,32 +292,35 @@ impl<'a> Decoder for Cr2Decoder<'a> {
     Ok(img)
   }
 
-  fn raw_metadata(&self, _file: &mut RawFile, _params: RawDecodeParams) -> Result<RawMetadata> {
+  fn raw_metadata(&self, _file: &RawSource, _params: &RawDecodeParams) -> Result<RawMetadata> {
     let exif = Exif::new(self.tiff.root_ifd())?;
     let mdata = RawMetadata::new_with_lens(&self.camera, exif, self.get_lens_description()?.cloned());
     Ok(mdata)
   }
 
-  fn xpacket(&self, _file: &mut RawFile, _params: RawDecodeParams) -> Result<Option<Vec<u8>>> {
+  fn xpacket(&self, _file: &RawSource, _params: &RawDecodeParams) -> Result<Option<Vec<u8>>> {
     Ok(self.xpacket.clone())
   }
 
-  fn full_image(&self, file: &mut RawFile) -> Result<Option<DynamicImage>> {
+  fn full_image(&self, file: &RawSource, params: &RawDecodeParams) -> Result<Option<DynamicImage>> {
+    if params.image_index != 0 {
+      return Ok(None);
+    }
     // For CR2, there is a full resolution image in IFD0.
     // This is compressed with old-JPEG compression (Compression = 6)
     let root_ifd = &self.tiff.root_ifd();
     let buf = root_ifd
-      .singlestrip_data(file.inner())
+      .singlestrip_data_rawsource(file)
       .map_err(|e| RawlerError::DecoderFailed(format!("Failed to get strip data: {}", e)))?;
     let compression = root_ifd.get_entry(TiffCommonTag::Compression).ok_or("Missing tag")?.force_usize(0);
     let width = fetch_tiff_tag!(root_ifd, TiffCommonTag::ImageWidth).force_usize(0);
     let height = fetch_tiff_tag!(root_ifd, TiffCommonTag::ImageLength).force_usize(0);
     if compression == 1 {
       Ok(Some(DynamicImage::ImageRgb8(
-        ImageBuffer::<Rgb<u8>, Vec<u8>>::from_raw(width as u32, height as u32, buf).unwrap(),
+        ImageBuffer::<Rgb<u8>, Vec<u8>>::from_raw(width as u32, height as u32, buf.to_vec()).unwrap(),
       )))
     } else {
-      let img = image::load_from_memory_with_format(&buf, image::ImageFormat::Jpeg).unwrap();
+      let img = image::load_from_memory_with_format(buf, image::ImageFormat::Jpeg).unwrap();
       Ok(Some(img))
     }
   }
@@ -356,14 +355,11 @@ impl<'a> Cr2Decoder<'a> {
 
   /// Construct new CR2 decoder
   /// This parses the RawFile again to include specific sub IFDs.
-  pub fn new(file: &mut RawFile, _tiff: GenericTiffReader, rawloader: &'a RawLoader) -> Result<Cr2Decoder<'a>> {
+  pub fn new(file: &RawSource, _tiff: GenericTiffReader, rawloader: &'a RawLoader) -> Result<Cr2Decoder<'a>> {
     debug!("CR2 decoder choosen");
 
     // Parse the TIFF again, with custom settings
-    file
-      .seek_to_start()
-      .map_err(|e| RawlerError::with_io_error("CR2: failed to read raw data", &file.path, e))?;
-    let tiff = GenericTiffReader::new(file.inner(), 0, 0, None, &[33424])?;
+    let tiff = GenericTiffReader::new(&mut file.reader(), 0, 0, None, &[33424])?;
 
     let exif = Self::new_exif_ifd(file, &tiff, rawloader)?;
     let makernote = Self::new_makernote(file, &tiff, &exif, rawloader)?;
@@ -400,7 +396,7 @@ impl<'a> Cr2Decoder<'a> {
 
   /// Search for EXIF IFD, if not found, fallback to root IFD.
   /// This is useful for EOS D2000 where EXIF tags are located in the root.
-  fn new_exif_ifd(_file: &mut RawFile, tiff: &GenericTiffReader, _rawloader: &RawLoader) -> Result<IFD> {
+  fn new_exif_ifd(_file: &RawSource, tiff: &GenericTiffReader, _rawloader: &RawLoader) -> Result<IFD> {
     if let Some(exif_ifd) = tiff
       .root_ifd()
       .sub_ifds()
@@ -413,7 +409,7 @@ impl<'a> Cr2Decoder<'a> {
       Ok(tiff.root_ifd().clone())
     }
     /*
-    if let Some(exif_ifd) = tiff.root_ifd().get_ifd(LegacyTiffRootTag::ExifIFDPointer, file.inner())? {
+    if let Some(exif_ifd) = tiff.root_ifd().get_ifd(LegacyTiffRootTag::ExifIFDPointer, &mut file.reader())? {
       return Ok(exif_ifd);
     } else {
       return Ok(tiff.root_ifd().clone());
@@ -449,6 +445,7 @@ impl<'a> Cr2Decoder<'a> {
         debug!("Lens Info tag: {}", lens_info);
         let resolver = LensResolver::new()
           .with_lens_keyname(exif_lens_name)
+          .with_camera(&self.camera) // must follow with_lens_keyname() as it my override key
           .with_lens_id((lens_info as u32, 0))
           .with_focal_len(self.get_focal_len()?)
           .with_mounts(&[CANON_CN_MOUNT.into(), CANON_EF_MOUNT.into()]);
@@ -462,10 +459,10 @@ impl<'a> Cr2Decoder<'a> {
   }
 
   /// Parse the Canon makernote IFD
-  fn new_makernote(file: &mut RawFile, tiff: &GenericTiffReader, exif_ifd: &IFD, _rawloader: &RawLoader) -> Result<Option<IFD>> {
+  fn new_makernote(file: &RawSource, tiff: &GenericTiffReader, exif_ifd: &IFD, _rawloader: &RawLoader) -> Result<Option<IFD>> {
     if let Some(entry) = exif_ifd.get_entry(TiffCommonTag::Makernote) {
       let offset = entry.offset().expect("Makernote internal offset is not present but should be");
-      let makernote = tiff.parse_ifd(file.inner(), offset as u32, 0, 0, exif_ifd.endian, &[])?;
+      let makernote = tiff.parse_ifd(&mut file.reader(), offset as u32, 0, 0, exif_ifd.endian, &[])?;
       return Ok(Some(makernote));
     }
     info!("No makernote tag found");
@@ -474,7 +471,7 @@ impl<'a> Cr2Decoder<'a> {
 
   /// Read XMP data from TIFF entry
   /// This is useful as it stores the image rating (if present).
-  fn read_xpacket(_file: &mut RawFile, tiff: &GenericTiffReader, _rawloader: &RawLoader) -> Result<Option<Vec<u8>>> {
+  fn read_xpacket(_file: &RawSource, tiff: &GenericTiffReader, _rawloader: &RawLoader) -> Result<Option<Vec<u8>>> {
     if let Some(entry) = tiff.root_ifd().get_entry(TiffCommonTag::Xmp) {
       if let Entry { value: Value::Byte(xmp), .. } = entry {
         Ok(Some(xmp.clone()))
@@ -526,11 +523,11 @@ impl<'a> Cr2Decoder<'a> {
   /// Get the SRAW white balance coefficents from COLORDATA tag
   /// The offsets are always at offset 78.
   /// These coefficents are used for SRAW YUV2RGB conversion.
-  fn get_sraw_wb(&self, rawfile: &mut RawFile, _cam: &Camera) -> Result<[f32; 4]> {
+  fn get_sraw_wb(&self, rawfile: &RawSource, _cam: &Camera) -> Result<[f32; 4]> {
     if let Some(levels) = self
       .makernote
       .as_ref()
-      .and_then(|mn| mn.get_entry_raw(Cr2MakernoteTag::ColorData, rawfile.inner()).transpose())
+      .and_then(|mn| mn.get_entry_raw(Cr2MakernoteTag::ColorData, &mut rawfile.reader()).transpose())
       .transpose()?
     {
       let offset = 78;
@@ -538,33 +535,33 @@ impl<'a> Cr2Decoder<'a> {
         levels.get_force_u16(offset) as f32,
         (levels.get_force_u16(offset + 1) as f32 + levels.get_force_u16(offset + 2) as f32) / 2.0,
         levels.get_force_u16(offset + 3) as f32,
-        NAN,
+        f32::NAN,
       ]);
     }
-    Ok([NAN, NAN, NAN, NAN])
+    Ok([f32::NAN, f32::NAN, f32::NAN, f32::NAN])
   }
 
   /// Get the white balance coefficents from COLORDATA tag
   /// The offsets are different, so we take the offset from camera params.
-  fn get_wb(&self, rawfile: &mut RawFile, _cam: &Camera) -> Result<[f32; 4]> {
+  fn get_wb(&self, rawfile: &RawSource, _cam: &Camera) -> Result<[f32; 4]> {
     if let Some(colordata) = self.makernote.as_ref().and_then(|mn| mn.get_entry(Cr2MakernoteTag::ColorData)) {
       let raw_wb = colordata::parse_colordata(colordata)?.wb;
       return Ok(normalize_wb(raw_wb));
     }
 
     // TODO: check if these tags belongs to RootIFD or makernote
-    if let Some(levels) = self.tiff.get_entry_raw(TiffCommonTag::Cr2PowerShotWB, rawfile.inner())? {
+    if let Some(levels) = self.tiff.get_entry_raw(TiffCommonTag::Cr2PowerShotWB, &mut rawfile.reader())? {
       Ok([
         levels.get_force_u32(3) as f32,
         levels.get_force_u32(2) as f32,
         levels.get_force_u32(4) as f32,
-        NAN,
+        f32::NAN,
       ])
     } else if let Some(levels) = self.tiff.get_entry(TiffCommonTag::Cr2OldWB) {
-      Ok([levels.force_f32(0), levels.force_f32(1), levels.force_f32(2), NAN])
+      Ok([levels.force_f32(0), levels.force_f32(1), levels.force_f32(2), f32::NAN])
     } else {
       // At least the D2000 has no WB
-      Ok([NAN, NAN, NAN, NAN])
+      Ok([f32::NAN, f32::NAN, f32::NAN, f32::NAN])
     }
   }
 
@@ -690,7 +687,7 @@ impl<'a> Cr2Decoder<'a> {
   /// Convert YCbCr (YUV) data to linear RGB
   fn convert_to_rgb(
     &self,
-    rawfile: &mut RawFile,
+    rawfile: &RawSource,
     cam: &Camera,
     ljpeg: &LjpegDecompressor,
     width: usize,
@@ -808,7 +805,7 @@ fn normalize_wb(raw_wb: [f32; 4]) -> [f32; 4] {
       *v /= div
     }
   });
-  [norm[0], (norm[1] + norm[2]) / 2.0, norm[3], NAN]
+  [norm[0], (norm[1] + norm[2]) / 2.0, norm[3], f32::NAN]
 }
 
 crate::tags::tiff_tag_enum!(Cr2MakernoteTag);
