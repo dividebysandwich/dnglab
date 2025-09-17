@@ -56,6 +56,12 @@ mod camera_eos_1d_x_mark_iii_raw_modes {
   super::camera_file_check!("Canon", "EOS-1D X Mark III", cam_canon_eos_1d_x_mark_iii_raw_iso_100_nocrop_nodual_cr3, "raw_modes/Canon EOS-1D X Mark III_RAW_ISO_100_nocrop_nodual.CR3");
   super::camera_file_check!("Canon", "EOS-1D X Mark III", cam_canon_eos_1d_x_mark_iii_craw_iso_100_nocrop_nodual_cr3, "raw_modes/Canon EOS-1D X Mark III_CRAW_ISO_100_nocrop_nodual.CR3");
 }
+mod camera_eos_1d_x_mark_iii_crm {
+  super::camera_file_check!("Canon", "EOS-1D X Mark III", cam_canon_1dx_mk3_crm_iso_800_raw_crm, "crm/Canon_1DX_MK3_CRM_ISO_800_RAW.CRM");
+  super::camera_file_check!("Canon", "EOS-1D X Mark III", cam_canon_1dx_mk3_crm_iso_800_lite_raw_crm, "crm/Canon_1DX_MK3_CRM_ISO_800_LITE_RAW.CRM");
+  super::camera_file_check!("Canon", "EOS-1D X Mark III", cam_canon_1dx_mk3_crm_iso_100_lite_raw_crm, "crm/Canon_1DX_MK3_CRM_ISO_100_LITE_RAW.CRM");
+  super::camera_file_check!("Canon", "EOS-1D X Mark III", cam_canon_1dx_mk3_crm_iso_max_lite_raw_crm, "crm/Canon_1DX_MK3_CRM_ISO_MAX_LITE_RAW.CRM");
+}
 mod camera_eos_1d_x_mark_ii_raw_modes {
   super::camera_file_check!("Canon", "EOS-1D X Mark II", cam_canon_eos_1d_x_mark_ii_iso_500_mraw_cr2, "raw_modes/Canon EOS-1D X Mark II_ISO_500_mRAW.CR2");
   super::camera_file_check!("Canon", "EOS-1D X Mark II", cam_canon_eos_1d_x_mark_ii_iso_500_sraw_cr2, "raw_modes/Canon EOS-1D X Mark II_ISO_500_sRAW.CR2");
@@ -783,6 +789,9 @@ mod camera_iq150_raw_modes {
 mod camera_ixm_rs150f_raw_modes {
   super::camera_file_check!("Phase One", "iXM-RS150F", cam_ixm_rs150f_iiq_sv2_iso_160_iiq, "raw_modes/iXM-RS150F_IIQ Sv2_ISO_160.IIQ");
 }
+mod camera_ixu_rs1000_nir_raw_modes {
+  super::camera_file_check!("Phase One", "iXU-RS1000 NIR", cam_ixu_rs1000_iiq, "raw_modes/iXU-RS1000.IIQ");
+}
 mod camera_p65_raw_modes {
   super::camera_file_check!("Phase One", "P65", cam_p65_plus_iiq_l_iso_200_iiq, "raw_modes/P65 Plus_IIQ L_ISO_200.IIQ");
   super::camera_file_check!("Phase One", "P65", cam_p65_plus_iiq_s_iso_200_iiq, "raw_modes/P65 Plus_IIQ S_ISO_200.IIQ");
@@ -1144,6 +1153,12 @@ mod camera_nikon_z_6_2_raw_modes {
   super::camera_file_check!("Nikon", "NIKON Z 6_2", cam_nikon_z_6_2_large_iso_100_14bits_packed_14_bits_nef, "raw_modes/NIKON Z 6_2_Large_ISO_100_14bits_Packed 14 bits.NEF");
   super::camera_file_check!("Nikon", "NIKON Z 6_2", cam_nikon_z_6_2_large_iso_100_14bits_lossy__type_2__nef, "raw_modes/NIKON Z 6_2_Large_ISO_100_14bits_Lossy (type 2).NEF");
 }
+mod camera_nikon_z_6_3_raw_modes {
+  super::camera_file_check!("Nikon", "NIKON Z 6_3", cam_nikon_z6_3_lossless_compressed_dx_nef, "raw_modes/Nikon_Z6_3_Lossless_compressed_DX.NEF");
+  super::camera_file_check!("Nikon", "NIKON Z 6_3", cam_nikon_z6_3_lossless_compressed_16_9_nef, "raw_modes/Nikon_Z6_3_Lossless_compressed_16_9.NEF");
+  super::camera_file_check!("Nikon", "NIKON Z 6_3", cam_nikon_z6_3_lossless_compressed_1_1_nef, "raw_modes/Nikon_Z6_3_Lossless_compressed_1_1.NEF");
+  super::camera_file_check!("Nikon", "NIKON Z 6_3", cam_nikon_z6_3_lossless_compressed_fx_nef, "raw_modes/Nikon_Z6_3_Lossless_compressed_FX.NEF");
+}
 mod camera_nikon_z_7_2_raw_modes {
   super::camera_file_check!("Nikon", "NIKON Z 7_2", cam_nikon_z_7_2_large_iso_100_12bits_uncompressed__reduced_to_12_bit__nef, "raw_modes/NIKON Z 7_2_Large_ISO_100_12bits_Uncompressed (reduced to 12 bit).NEF");
   super::camera_file_check!("Nikon", "NIKON Z 7_2", cam_nikon_z_7_2_large_iso_100_12bits_lossy__type_2__nef, "raw_modes/NIKON Z 7_2_Large_ISO_100_12bits_Lossy (type 2).NEF");
@@ -1159,6 +1174,11 @@ mod camera_z_30_raw_modes {
 mod camera_z_50_raw_modes {
   super::camera_file_check!("Nikon", "Z 50", cam_nikon_z_50_large_iso_250_14bits_lossless_nef, "raw_modes/NIKON Z 50_Large_ISO_250_14bits_Lossless.NEF");
   super::camera_file_check!("Nikon", "Z 50", cam_nikon_z_50_large_iso_250_12bits_lossless_nef, "raw_modes/NIKON Z 50_Large_ISO_250_12bits_Lossless.NEF");
+}
+mod camera_z_50_ii_raw_modes {
+  super::camera_file_check!("Nikon", "Z 50 II", cam_z50ii_dx_lossless_nef, "raw_modes/Z50II_DX_lossless.NEF");
+  super::camera_file_check!("Nikon", "Z 50 II", cam_z50ii_1x1_lossless_nef, "raw_modes/Z50II_1x1_lossless.NEF");
+  super::camera_file_check!("Nikon", "Z 50 II", cam_z50ii_16x9_lossless_nef, "raw_modes/Z50II_16x9_lossless.NEF");
 }
 mod camera_z_6_raw_modes {
   super::camera_file_check!("Nikon", "Z 6", cam_nikon_z_6_large_iso_100_12bits_lossy__type_2__nef, "raw_modes/NIKON Z 6_Large_ISO_100_12bits_Lossy (type 2).NEF");
@@ -2068,6 +2088,12 @@ mod camera_dc_gh6_raw_modes {
   super::camera_file_check!("Panasonic", "DC-GH6", cam_dc_gh6_iso_800_8fmt_1x1_hires_rw2, "raw_modes/DC-GH6_ISO_800_8fmt_1x1_hires.RW2");
   super::camera_file_check!("Panasonic", "DC-GH6", cam_dc_gh6_iso_800_8fmt_4x3_rw2, "raw_modes/DC-GH6_ISO_800_8fmt_4x3.RW2");
 }
+mod camera_dc_gh7_raw_modes {
+  super::camera_file_check!("Panasonic", "DC-GH7", cam_dc_gh7_iso_100_8fmt_3x2_rw2, "raw_modes/DC-GH7_ISO_100_8fmt_3x2.RW2");
+  super::camera_file_check!("Panasonic", "DC-GH7", cam_dc_gh7_iso_100_8fmt_4x3_rw2, "raw_modes/DC-GH7_ISO_100_8fmt_4x3.RW2");
+  super::camera_file_check!("Panasonic", "DC-GH7", cam_dc_gh7_iso_100_8fmt_1x1_rw2, "raw_modes/DC-GH7_ISO_100_8fmt_1x1.RW2");
+  super::camera_file_check!("Panasonic", "DC-GH7", cam_dc_gh7_iso_100_8fmt_16x9_rw2, "raw_modes/DC-GH7_ISO_100_8fmt_16x9.RW2");
+}
 mod camera_dc_gx7mk3_raw_modes {
   super::camera_file_check!("Panasonic", "DC-GX7MK3", cam_dc_gx7mk3_iso_1600_panasonic_raw_1_5184x3888_rw2, "raw_modes/DC-GX7MK3_ISO_1600_Panasonic RAW 1_5184x3888.RW2");
 }
@@ -2110,6 +2136,18 @@ mod camera_dc_s1_raw_modes {
 mod camera_dc_s1r_raw_modes {
   super::camera_file_check!("Panasonic", "DC-S1R", cam_dc_s1r_iso_100_6fmt_8368x5584_rw2, "raw_modes/DC-S1R_ISO_100_6fmt_8368x5584.RW2");
 }
+mod camera_dc_s1rm2_raw_modes {
+  super::camera_file_check!("Panasonic", "DC-S1RM2", cam_dc_s1rm2_2x1_rw2, "raw_modes/DC-S1RM2_2x1.RW2");
+  super::camera_file_check!("Panasonic", "DC-S1RM2", cam_dc_s1rm2_65x24_rw2, "raw_modes/DC-S1RM2_65x24.RW2");
+  super::camera_file_check!("Panasonic", "DC-S1RM2", cam_dc_s1rm2_12bit_burst_electronic_rw2, "raw_modes/DC-S1RM2_12bit_burst_electronic.RW2");
+  super::camera_file_check!("Panasonic", "DC-S1RM2", cam_dc_s1rm2_1x1_rw2, "raw_modes/DC-S1RM2_1x1.RW2");
+  super::camera_file_check!("Panasonic", "DC-S1RM2", cam_dc_s1rm2_4x3_rw2, "raw_modes/DC-S1RM2_4x3.RW2");
+  super::camera_file_check!("Panasonic", "DC-S1RM2", cam_dc_s1rm2_3x2_multi_exposure_rw2, "raw_modes/DC-S1RM2_3x2_multi_exposure.RW2");
+  super::camera_file_check!("Panasonic", "DC-S1RM2", cam_dc_s1rm2_3x2_eshutter_rw2, "raw_modes/DC-S1RM2_3x2_eshutter.RW2");
+  super::camera_file_check!("Panasonic", "DC-S1RM2", cam_dc_s1rm2_hires_standard_rw2, "raw_modes/DC-S1RM2_hires_standard.RW2");
+  super::camera_file_check!("Panasonic", "DC-S1RM2", cam_dc_s1rm2_live_composite_mode_rw2, "raw_modes/DC-S1RM2_live_composite_mode.RW2");
+  super::camera_file_check!("Panasonic", "DC-S1RM2", cam_dc_s1rm2_16x9_rw2, "raw_modes/DC-S1RM2_16x9.RW2");
+}
 mod camera_dc_s5_raw_modes {
   super::camera_file_check!("Panasonic", "DC-S5", cam_dc_s5_iso_640_6fmt_6000x4000_rw2, "raw_modes/DC-S5_ISO_640_6fmt_6000x4000.RW2");
   super::camera_file_check!("Panasonic", "DC-S5", cam_dc_s5_iso_640_7fmt_12000x8000_rw2, "raw_modes/DC-S5_ISO_640_7fmt_12000x8000.RW2");
@@ -2121,6 +2159,19 @@ mod camera_dc_s5m2x_raw_modes {
   super::camera_file_check!("Panasonic", "DC-S5M2X", cam_dc_s5m2x_3x2_14bits_rw2, "raw_modes/DC-S5M2X_3x2_14bits.RW2");
   super::camera_file_check!("Panasonic", "DC-S5M2X", cam_dc_s5m2x_3x2_sensorshift_96mp_rw2, "raw_modes/DC-S5M2X_3x2_sensorshift_96MP.RW2");
   super::camera_file_check!("Panasonic", "DC-S5M2X", cam_dc_s5m2x_3x2_12bits_burst_rw2, "raw_modes/DC-S5M2X_3x2_12bits_burst.RW2");
+}
+mod camera_dc_s9_raw_modes {
+  super::camera_file_check!("Panasonic", "DC-S9", cam_dc_s9_iso6400_medium_rw2, "raw_modes/DC-S9_ISO6400_Medium.RW2");
+  super::camera_file_check!("Panasonic", "DC-S9", cam_dc_s9_iso400_hires_ll_rw2, "raw_modes/DC-S9_ISO400_HiRes-LL.RW2");
+  super::camera_file_check!("Panasonic", "DC-S9", cam_dc_s9_iso400_hires_xl_rw2, "raw_modes/DC-S9_ISO400_HiRes-XL.RW2");
+  super::camera_file_check!("Panasonic", "DC-S9", cam_dc_s9_iso800_rw2, "raw_modes/DC-S9_ISO800.RW2");
+  super::camera_file_check!("Panasonic", "DC-S9", cam_dc_s9_iso6400_rw2, "raw_modes/DC-S9_ISO6400.RW2");
+  super::camera_file_check!("Panasonic", "DC-S9", cam_dc_s9_iso800_medium_rw2, "raw_modes/DC-S9_ISO800_Medium.RW2");
+  super::camera_file_check!("Panasonic", "DC-S9", cam_dc_s9_iso400_medium_rw2, "raw_modes/DC-S9_ISO400_Medium.RW2");
+  super::camera_file_check!("Panasonic", "DC-S9", cam_dc_s9_iso100_rw2, "raw_modes/DC-S9_ISO100.RW2");
+  super::camera_file_check!("Panasonic", "DC-S9", cam_dc_s9_iso51200_medium_rw2, "raw_modes/DC-S9_ISO51200_Medium.RW2");
+  super::camera_file_check!("Panasonic", "DC-S9", cam_dc_s9_iso51200_rw2, "raw_modes/DC-S9_ISO51200.RW2");
+  super::camera_file_check!("Panasonic", "DC-S9", cam_dc_s9_iso100_medium_rw2, "raw_modes/DC-S9_ISO100_Medium.RW2");
 }
 mod camera_dc_tz200_raw_modes {
   super::camera_file_check!("Panasonic", "DC-TZ200", cam_dc_tz202_iso_125_4fmt_1x1_rw2, "raw_modes/DC-TZ202_ISO_125_4fmt_1x1.RW2");
@@ -2703,6 +2754,14 @@ mod camera_gfx_100_raw_modes {
   super::camera_file_check!("Fujifilm", "GFX 100", cam_gfx_100_iso_100_bitdepth_14_200_mib_raf, "raw_modes/GFX 100_ISO_100_Bitdepth_14_200 MiB.RAF");
   super::camera_file_check!("Fujifilm", "GFX 100", cam_gfx_100_iso_100_bitdepth_16_200_mib_raf, "raw_modes/GFX 100_ISO_100_Bitdepth_16_200 MiB.RAF");
 }
+mod camera_gfx_100rf_raw_modes {
+  super::camera_file_check!("Fujifilm", "GFX 100RF", cam_gfx100rf_14bit_uncompressed_raf, "raw_modes/GFX100RF_14bit_uncompressed.RAF");
+  super::camera_file_check!("Fujifilm", "GFX 100RF", cam_gfx100rf_16bit_lossy_raf, "raw_modes/GFX100RF_16bit_lossy.RAF");
+  super::camera_file_check!("Fujifilm", "GFX 100RF", cam_gfx100rf_14bit_lossy_raf, "raw_modes/GFX100RF_14bit_lossy.RAF");
+  super::camera_file_check!("Fujifilm", "GFX 100RF", cam_gfx100rf_16bit_lossless_raf, "raw_modes/GFX100RF_16bit_lossless.RAF");
+  super::camera_file_check!("Fujifilm", "GFX 100RF", cam_gfx100rf_14bit_lossless_raf, "raw_modes/GFX100RF_14bit_lossless.RAF");
+  super::camera_file_check!("Fujifilm", "GFX 100RF", cam_gfx100rf_16bit_uncompressed_raf, "raw_modes/GFX100RF_16bit_uncompressed.RAF");
+}
 mod camera_gfx_100_ii_raw_modes {
   super::camera_file_check!("Fujifilm", "GFX 100 II", cam_gfx100_ii_14bits_lossy_4x3_raf, "raw_modes/GFX100_II_14bits_lossy_4x3.RAF");
   super::camera_file_check!("Fujifilm", "GFX 100 II", cam_gfx100_ii_14bits_lossless_4x3_raf, "raw_modes/GFX100_II_14bits_lossless_4x3.RAF");
@@ -2719,6 +2778,14 @@ mod camera_gfx100s_compressed {
 mod camera_gfx100s_raw_modes {
   super::camera_file_check!("Fujifilm", "GFX100S", cam_fujifilm_gfx100s_16bits_uncompress_4_3_raf, "raw_modes/Fujifilm-GFX100S-16bits-uncompress-4_3.RAF");
   super::camera_file_check!("Fujifilm", "GFX100S", cam_fujifilm_gfx100s_14bits_uncompress_4_3_raf, "raw_modes/Fujifilm-GFX100S-14bits-uncompress-4_3.RAF");
+}
+mod camera_gfx_100s_ii_raw_modes {
+  super::camera_file_check!("Fujifilm", "GFX 100S II", cam_gfx100sii_14bit_lossless_raf, "raw_modes/GFX100SII_14bit_lossless.RAF");
+  super::camera_file_check!("Fujifilm", "GFX 100S II", cam_gfx100sii_14bit_uncompressed_raf, "raw_modes/GFX100SII_14bit_uncompressed.RAF");
+  super::camera_file_check!("Fujifilm", "GFX 100S II", cam_gfx100sii_16bit_lossless_raf, "raw_modes/GFX100SII_16bit_lossless.RAF");
+  super::camera_file_check!("Fujifilm", "GFX 100S II", cam_gfx100sii_14bit_lossy_raf, "raw_modes/GFX100SII_14bit_lossy.RAF");
+  super::camera_file_check!("Fujifilm", "GFX 100S II", cam_gfx100sii_16bit_lossy_raf, "raw_modes/GFX100SII_16bit_lossy.RAF");
+  super::camera_file_check!("Fujifilm", "GFX 100S II", cam_gfx100sii_16bit_uncompressed_raf, "raw_modes/GFX100SII_16bit_uncompressed.RAF");
 }
 mod camera_gfx_50r_compressed {
   super::camera_file_check!("Fujifilm", "GFX 50R", cam_gfx_50r_iso_100_bitdepth_14_50_mib_raf, "compressed/GFX 50R_ISO_100_Bitdepth_14_50 MiB.RAF");
@@ -2835,6 +2902,14 @@ mod camera_x_h2_raw_modes {
 }
 mod camera_x_m1_raw_modes {
   super::camera_file_check!("Fujifilm", "X-M1", cam_x_m1_iso_200_raf, "raw_modes/X-M1_ISO_200.RAF");
+}
+mod camera_x_m5_raw_modes {
+  super::camera_file_check!("Fujifilm", "X-M5", cam_fujifilm_x_m5_iso100_lossy_compressed2_raf, "raw_modes/fujifilm_X-M5_ISO100_lossy_compressed2.RAF");
+  super::camera_file_check!("Fujifilm", "X-M5", cam_fujifilm_x_m5_iso100_lossless_compressed_raf, "raw_modes/fujifilm_X-M5_ISO100_lossless_compressed.RAF");
+  super::camera_file_check!("Fujifilm", "X-M5", cam_fujifilm_x_m5_iso100_uncompressed2_raf, "raw_modes/fujifilm_X-M5_ISO100_uncompressed2.RAF");
+  super::camera_file_check!("Fujifilm", "X-M5", cam_fujifilm_x_m5_iso100_lossy_compressed_raf, "raw_modes/fujifilm_X-M5_ISO100_lossy_compressed.RAF");
+  super::camera_file_check!("Fujifilm", "X-M5", cam_fujifilm_x_m5_iso100_lossless_compressed2_raf, "raw_modes/fujifilm_X-M5_ISO100_lossless_compressed2.RAF");
+  super::camera_file_check!("Fujifilm", "X-M5", cam_fujifilm_x_m5_iso100_uncompressed_raf, "raw_modes/fujifilm_X-M5_ISO100_uncompressed.RAF");
 }
 mod camera_x_pro1_raw_modes {
   super::camera_file_check!("Fujifilm", "X-Pro1", cam_x_pro1_iso_200_raf, "raw_modes/X-Pro1_ISO_200.RAF");

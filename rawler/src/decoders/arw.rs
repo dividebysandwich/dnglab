@@ -21,6 +21,7 @@ use crate::formats::tiff::Value;
 use crate::formats::tiff::ifd::OffsetMode;
 use crate::formats::tiff::reader::TiffReader;
 use crate::imgop::Dim2;
+use crate::imgop::Point;
 use crate::imgop::Rect;
 use crate::imgop::yuv::interpolate_yuv;
 use crate::imgop::yuv::ycbcr_to_rgb;
@@ -116,7 +117,7 @@ impl<'a> Decoder for ArwDecoder<'a> {
     let mut white = params.whitelevel.map(|x| x[0]);
     let mut black = params.blacklevel;
 
-    let src = file.subview_until_eof(offset as u64).unwrap();
+    let src = file.subview_until_eof(offset as u64)?;
     let mut cpp = 1;
 
     let image = match compression {
@@ -166,8 +167,6 @@ impl<'a> Decoder for ArwDecoder<'a> {
       _ => return Err(RawlerError::DecoderFailed(format!("ARW: Don't know how to decode type {}", compression))),
     };
 
-    let crop = Rect::from_tiff(raw).or_else(|| self.camera.crop_area.map(|area| Rect::new_with_borders(Dim2::new(width, height), &area)));
-
     let blacklevel = black.map(|black| match cpp {
       1 => BlackLevel::new(&black, self.camera.cfa.width, self.camera.cfa.height, cpp),
       // For YUV data, the blacklevel needs to be multiplicated by 2
@@ -189,8 +188,14 @@ impl<'a> Decoder for ArwDecoder<'a> {
       img.wb_coeffs = [1.0, 1.0, 1.0, f32::NAN];
     }
 
-    img.crop_area = crop;
-    img.active_area = self.camera.active_area.map(|area| Rect::new_with_borders(Dim2::new(width, height), &area));
+    if let Some(raw_image_size) = self.get_raw_image_size(raw)? {
+      log::debug!("Found SONYRAWIMAGESIZE tag, using as active_area");
+      img.active_area = Some(raw_image_size);
+    } else {
+      img.active_area = self.camera.active_area.map(|area| Rect::new_with_borders(Dim2::new(width, height), &area));
+    }
+    img.crop_area = Rect::from_tiff(raw).or_else(|| self.camera.crop_area.map(|area| Rect::new_with_borders(Dim2::new(width, height), &area)));
+
     log::debug!("raw dim: {}x{}", width, height);
     log::debug!("crop_area: {:?}", img.crop_area);
     log::debug!("active_area: {:?}", img.active_area);
@@ -209,7 +214,8 @@ impl<'a> Decoder for ArwDecoder<'a> {
     if let Some(preview_off) = root.get_entry(ExifTag::JPEGInterchangeFormat) {
       if let Some(preview_len) = root.get_entry(ExifTag::JPEGInterchangeFormatLength) {
         let buf = file.subview(preview_off.force_u64(0), preview_len.force_u64(0))?;
-        let img = image::load_from_memory_with_format(buf, image::ImageFormat::Jpeg).unwrap();
+        let img = image::load_from_memory_with_format(buf, image::ImageFormat::Jpeg)
+          .map_err(|err| RawlerError::DecoderFailed(format!("Failed to read JPEG image: {:?}", err)))?;
         return Ok(Some(img));
       }
     }
@@ -310,7 +316,7 @@ impl<'a> ArwDecoder<'a> {
     let height = 2608;
     let offset = fetch_tiff_tag!(raw, TiffCommonTag::SubIFDs).force_usize(0);
 
-    let src = file.subview_until_eof(offset as u64).unwrap();
+    let src = file.subview_until_eof(offset as u64)?;
     let image = ArwDecoder::decode_arw1(src, width, height, dummy);
 
     // Get the WB the MRW way
@@ -359,7 +365,7 @@ impl<'a> ArwDecoder<'a> {
     let image = if dummy {
       PixU16::new_uninit(width, height)
     } else {
-      let buffer = file.as_vec().unwrap();
+      let buffer = file.as_vec()?;
       let len = width * height * 2;
 
       // Constants taken from dcraw
@@ -529,7 +535,7 @@ impl<'a> ArwDecoder<'a> {
           for col in 0..coltiles {
             let offset = offsets.force_usize(row * coltiles + col);
             let src = &buffer[offset..];
-            let decompressor = LjpegDecompressor::new(src).unwrap();
+            let decompressor = LjpegDecompressor::new(src)?;
             let cpp = 4;
             let w = 256;
             let h = 256;
@@ -579,7 +585,7 @@ impl<'a> ArwDecoder<'a> {
       let tag = fetch_tiff_tag!(priv_tiff, TiffCommonTag::SonyKey).get_data();
       LEu32(tag, 0)
     };
-    let buffer = file.as_vec().unwrap();
+    let buffer = file.as_vec()?;
     let decrypted_buf = ArwDecoder::sony_decrypt(&buffer, sony_offset as usize, sony_length, sony_key)?;
 
     let decrypted_tiff = IFD::new(&mut Cursor::new(decrypted_buf), 0, 0, -(sony_offset as i32), Endian::Little, &[])?;
@@ -696,6 +702,14 @@ impl<'a> ArwDecoder<'a> {
       out.push(((output >> 24) & 0xff) as u8);
     }
     Ok(out)
+  }
+
+  fn get_raw_image_size(&self, raw_ifd: &IFD) -> Result<Option<Rect>> {
+    if let Some(entry) = raw_ifd.get_entry(ExifTag::SonyRawImageSize) {
+      Ok(Some(Rect::new(Point::default(), Dim2::new(entry.force_usize(0), entry.force_usize(1)))))
+    } else {
+      Ok(None)
+    }
   }
 }
 

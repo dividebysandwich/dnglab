@@ -15,6 +15,7 @@ cameras/Canon/EOS-1Ds Mark III/raw_modes
 cameras/Canon/EOS-1Ds Mark II/raw_modes
 cameras/Canon/EOS-1Ds/raw_modes
 cameras/Canon/EOS-1D X Mark III/raw_modes
+cameras/Canon/EOS-1D X Mark III/crm
 cameras/Canon/EOS-1D X Mark II/raw_modes
 cameras/Canon/EOS-1D X/raw_modes
 cameras/Canon/EOS 2000D/raw_modes
@@ -210,6 +211,7 @@ cameras/Phase One/P30/raw_modes
 cameras/Phase One/IQ3 100MP Trichr/raw_modes
 cameras/Phase One/IQ150/raw_modes
 cameras/Phase One/iXM-RS150F/raw_modes
+cameras/Phase One/iXU-RS1000 NIR/raw_modes
 cameras/Phase One/P65/raw_modes
 cameras/Phase One/P20/raw_modes
 cameras/Phase One/P25/raw_modes
@@ -290,9 +292,11 @@ cameras/Nikon/D800/raw_modes
 cameras/Nikon/D3100/raw_modes
 cameras/Nikon/Z 5/raw_modes
 cameras/Nikon/NIKON Z 6_2/raw_modes
+cameras/Nikon/NIKON Z 6_3/raw_modes
 cameras/Nikon/NIKON Z 7_2/raw_modes
 cameras/Nikon/Z 30/raw_modes
 cameras/Nikon/Z 50/raw_modes
+cameras/Nikon/Z 50 II/raw_modes
 cameras/Nikon/Z 6/raw_modes
 cameras/Nikon/NIKON Z f/raw_modes
 cameras/Nikon/NIKON Z fc/raw_modes
@@ -548,6 +552,7 @@ cameras/Panasonic/DC-GH5M2/raw_modes
 cameras/Panasonic/DC-GH5/raw_modes
 cameras/Panasonic/DC-GH5S/raw_modes
 cameras/Panasonic/DC-GH6/raw_modes
+cameras/Panasonic/DC-GH7/raw_modes
 cameras/Panasonic/DC-GX7MK3/raw_modes
 cameras/Panasonic/DC-GX800/raw_modes
 cameras/Panasonic/DC-GX850/raw_modes
@@ -557,9 +562,11 @@ cameras/Panasonic/DC-LX100M2/raw_modes
 cameras/Panasonic/DC-S1H/raw_modes
 cameras/Panasonic/DC-S1/raw_modes
 cameras/Panasonic/DC-S1R/raw_modes
+cameras/Panasonic/DC-S1RM2/raw_modes
 cameras/Panasonic/DC-S5/raw_modes
 cameras/Panasonic/DC-S5M2/raw_modes
 cameras/Panasonic/DC-S5M2X/raw_modes
+cameras/Panasonic/DC-S9/raw_modes
 cameras/Panasonic/DC-TZ200/raw_modes
 cameras/Panasonic/DC-TZ202/raw_modes
 cameras/Panasonic/DC-TZ90/raw_modes
@@ -688,9 +695,11 @@ cameras/Fujifilm/FinePix X100/raw_modes
 cameras/Fujifilm/FinePix X10/raw_modes
 cameras/Fujifilm/GFX 100/compressed
 cameras/Fujifilm/GFX 100/raw_modes
+cameras/Fujifilm/GFX 100RF/raw_modes
 cameras/Fujifilm/GFX 100 II/raw_modes
 cameras/Fujifilm/GFX100S/compressed
 cameras/Fujifilm/GFX100S/raw_modes
+cameras/Fujifilm/GFX 100S II/raw_modes
 cameras/Fujifilm/GFX 50R/compressed
 cameras/Fujifilm/GFX 50R/raw_modes
 cameras/Fujifilm/GFX 50S/compressed
@@ -727,6 +736,7 @@ cameras/Fujifilm/X-H1/raw_modes
 cameras/Fujifilm/X-H2S/raw_modes
 cameras/Fujifilm/X-H2/raw_modes
 cameras/Fujifilm/X-M1/raw_modes
+cameras/Fujifilm/X-M5/raw_modes
 cameras/Fujifilm/X-Pro1/raw_modes
 cameras/Fujifilm/X-Pro2/compressed
 cameras/Fujifilm/X-Pro2/raw_modes
