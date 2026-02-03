@@ -1218,6 +1218,9 @@ mod camera_nikon_z_9_raw_modes {
 mod camera_nikon_z_8_raw_modes {
   super::camera_file_check!("Nikon", "NIKON Z 8", cam_nikon_z8_raw_14_bit_lossless_compression_nef, "raw_modes/Nikon_Z8_raw_14_bit_lossless_compression.NEF");
 }
+mod camera_nikon_coolscan_5000_ed_raw_modes {
+  super::camera_file_check!("Nikon", "Nikon COOLSCAN 5000 ED", cam_nikon_super_coolscan_5000_ed_nef, "raw_modes/nikon-super-coolscan-5000-ed.nef");
+}
 mod camera_dsc_f828_raw_modes {
   super::camera_file_check!("Sony", "DSC-F828", cam_dsc_f828_iso_64_14_14_14bits_uncompressed_srf, "raw_modes/DSC-F828_ISO_64_14 14 14bits_Uncompressed.SRF");
 }
@@ -1579,6 +1582,9 @@ mod camera_slt_a99_raw_modes {
 }
 mod camera_zv_1_raw_modes {
   super::camera_file_check!("Sony", "ZV-1", cam_zv_1_iso_125_12bits_sony_arw_compressed_arw, "raw_modes/ZV-1_ISO_125_12bits_Sony ARW Compressed.ARW");
+}
+mod camera_zv_1m2_raw_modes {
+  super::camera_file_check!("Sony", "ZV-1M2", cam_sony_zv_1m2_12bit_3x2_arw, "raw_modes/Sony_ZV-1M2_12bit_3x2.ARW");
 }
 mod camera_zv_e1_raw_modes {
   super::camera_file_check!("Sony", "ZV-E1", cam_zv_e1_iso_200_14bits_arw, "raw_modes/ZV-E1_ISO_200_14bits.ARW");

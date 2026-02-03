@@ -20,6 +20,8 @@ use crate::bits::LookupTable;
 use crate::bits::clampbits;
 use crate::buffer::PaddedBuf;
 use crate::decoders::decode_threaded;
+use crate::decoders::dynamic_image_from_ifd;
+use crate::decoders::dynamic_image_from_jpeg_interchange_format;
 use crate::decoders::nef::lensdata::NefLensData;
 use crate::decompressors::ljpeg::huffman::HuffTable;
 use crate::exif::Exif;
@@ -147,7 +149,8 @@ impl<'a> NefDecoder<'a> {
   pub fn new(file: &RawSource, tiff: GenericTiffReader, rawloader: &'a RawLoader) -> Result<NefDecoder<'a>> {
     let raw = tiff
       .find_first_ifd_with_tag(TiffCommonTag::CFAPattern)
-      .ok_or_else(|| RawlerError::DecoderFailed(format!("Failed to find a IFD with CFAPattern tag")))?;
+      .or_else(|| tiff.find_ifd_with_new_subfile_type(0))
+      .ok_or_else(|| RawlerError::DecoderFailed(format!("Failed to find a suitable IFD in NEF decoder")))?;
     let bps = fetch_tiff_tag!(raw, TiffCommonTag::BitsPerSample).force_usize(0);
 
     // Make sure we always use a 12/14 bit mode to get correct white/blackpoints
@@ -178,10 +181,12 @@ impl<'a> Decoder for NefDecoder<'a> {
     let raw = self
       .tiff
       .find_first_ifd_with_tag(TiffCommonTag::CFAPattern)
-      .ok_or_else(|| RawlerError::DecoderFailed(format!("Failed to find a IFD with CFAPattern tag")))?;
+      .or_else(|| self.tiff.find_ifd_with_new_subfile_type(0))
+      .ok_or_else(|| RawlerError::DecoderFailed(format!("Failed to find a suitable IFD in NEF decoder")))?;
     let mut width = fetch_tiff_tag!(raw, TiffCommonTag::ImageWidth).force_usize(0);
     let height = fetch_tiff_tag!(raw, TiffCommonTag::ImageLength).force_usize(0);
     let bps = fetch_tiff_tag!(raw, TiffCommonTag::BitsPerSample).force_usize(0);
+    let mut cpp = fetch_tiff_tag!(raw, TiffCommonTag::BitsPerSample).count(); // Linear files don't have SamplesPerPixel
     let compression = fetch_tiff_tag!(raw, TiffCommonTag::Compression).force_usize(0);
 
     let nef_compression = if let Some(z_makernote) = self.makernote.get_entry(NikonMakernote::Makernotes0x51) {
@@ -223,7 +228,6 @@ impl<'a> Decoder for NefDecoder<'a> {
       file.subview_padded(offset as u64, full_size as u64)?
     };
 
-    let mut cpp = 1;
     let coeffs = normalize_wb(self.get_wb()?);
     debug!("WB coeff: {:?}", coeffs);
 
@@ -246,6 +250,14 @@ impl<'a> Decoder for NefDecoder<'a> {
     } else if let Some(padding) = self.is_uncompressed(raw)? {
       debug!("NEF uncompressed row padding: {}, little-endian: {}", padding, self.tiff.little_endian());
       match bps {
+        16 => {
+          // Used by Coolscan scanners
+          if self.tiff.little_endian() {
+            decode_16le(&src, width * cpp, height, dummy)
+          } else {
+            decode_16be(&src, width * cpp, height, dummy)
+          }
+        }
         14 => {
           if (self.tiff.little_endian() || self.camera.find_hint("little_endian")) && !self.camera.find_hint("big_endian") {
             // Models like D6 uses packed instead of unpacked 14le encoding. And D6 uses
@@ -307,35 +319,41 @@ impl<'a> Decoder for NefDecoder<'a> {
 
   fn raw_metadata(&self, _file: &RawSource, _params: &RawDecodeParams) -> Result<RawMetadata> {
     let exif = Exif::new(self.tiff.root_ifd())?;
-    //let mdata = RawMetadata::new(&self.camera, exif);
-    let mdata = RawMetadata::new_with_lens(&self.camera, exif, self.get_lens_description()?.cloned());
-    Ok(mdata)
+    Ok(match self.get_lens_description() {
+      Ok(lens_data) => RawMetadata::new_with_lens(&self.camera, exif, lens_data.cloned()),
+      Err(err) => {
+        log::warn!("Failed to read lens information: {:?}", err);
+        RawMetadata::new(&self.camera, exif)
+      }
+    })
   }
 
   fn full_image(&self, file: &RawSource, params: &RawDecodeParams) -> Result<Option<DynamicImage>> {
     if params.image_index != 0 {
       return Ok(None);
     }
-    let root_ifd = &self.tiff.root_ifd();
-    if !root_ifd.contains_singlestrip_image() {
-      // TODO: implement multistrip
-      return Ok(None);
-    }
-    let buf = root_ifd
-      .singlestrip_data_rawsource(file)
-      .map_err(|e| RawlerError::DecoderFailed(format!("Failed to get strip data: {}", e)))?;
-    let compression = root_ifd.get_entry(TiffCommonTag::Compression).ok_or("Missing tag")?.force_usize(0);
-    let width = fetch_tiff_tag!(root_ifd, TiffCommonTag::ImageWidth).force_usize(0);
-    let height = fetch_tiff_tag!(root_ifd, TiffCommonTag::ImageLength).force_usize(0);
-    if compression == 1 {
-      Ok(Some(DynamicImage::ImageRgb8(
-        ImageBuffer::<Rgb<u8>, Vec<u8>>::from_raw(width as u32, height as u32, buf.to_vec())
-          .ok_or_else(|| RawlerError::DecoderFailed(format!("Failed to read image")))?,
-      )))
+    // High resolution preview image is stored in JPEGInterchangeFormat tag.
+    // Search for all IFDs and use the best match.
+    let mut ifds = self.tiff.find_ifds_with_filter(|ifd| {
+      if ifd.get_new_sub_file_type() == Some(1) {
+        ifd.get_entry(ExifTag::JPEGInterchangeFormatLength).is_some()
+      } else {
+        false
+      }
+    });
+
+    ifds.sort_by(|a, b| {
+      a.get_entry(ExifTag::JPEGInterchangeFormatLength)
+        .map(|x| x.force_u32(0))
+        .cmp(&b.get_entry(ExifTag::JPEGInterchangeFormatLength).map(|x| x.force_u32(0)))
+    });
+
+    // Take the IFD with the largest JPEG stream size
+    if let Some(jpeg_ifd) = ifds.last() {
+      return Ok(Some(dynamic_image_from_jpeg_interchange_format(jpeg_ifd, file)?));
     } else {
-      let img = image::load_from_memory_with_format(buf, image::ImageFormat::Jpeg)
-        .map_err(|err| RawlerError::DecoderFailed(format!("Failed to read JPEG image: {:?}", err)))?;
-      Ok(Some(img))
+      // No matching IFDs found, use root IFD (possibly bad resolution)
+      Ok(Some(dynamic_image_from_ifd(self.tiff.root_ifd(), file)?))
     }
   }
 
@@ -496,7 +514,8 @@ impl<'a> NefDecoder<'a> {
         x => Err(RawlerError::unsupported(&self.camera, format!("NEF: Don't know about WB version 0x{:x}", x))),
       }
     } else {
-      Err(RawlerError::DecoderFailed("NEF: Don't know how to fetch WB".to_string()))
+      log::debug!("NEF: Don't know how to fetch WB, fallback to [1.0, 1.0, 1.0]");
+      Ok([1.0, 1.0, 1.0, 1.0])
     }
   }
 
