@@ -1117,7 +1117,7 @@ where
 /// Caution: The last chunk may not be equal to `lines`.
 pub fn decode_threaded_multiline_prealloc<'a, T, F>(pixbuf: &'a mut Pix2D<T>, lines: usize, closure: &F) -> std::result::Result<(), String>
 where
-  F: Fn(&mut (dyn LineIteratorMut<'a, T>), usize, usize) -> std::result::Result<(), String> + Sync,
+  F: Fn(&mut dyn LineIteratorMut<'a, T>, usize, usize) -> std::result::Result<(), String> + Sync,
   T: SubPixel + 'a,
 {
   let width = pixbuf.width;

@@ -1,6 +1,4 @@
 use image::DynamicImage;
-use image::ImageBuffer;
-use image::Rgb;
 use log::debug;
 use log::warn;
 use serde::Deserialize;

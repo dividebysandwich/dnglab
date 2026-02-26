@@ -169,32 +169,32 @@ impl RawDevelop {
       if let Some((_illuminant, color_matrix)) = found_matrix {
         // Safety check: ensure matrix is valid length
         if color_matrix.len() % 3 == 0 {
-            let mut xyz2cam: [[f32; 3]; 4] = [[0.0; 3]; 4];
-            let components = color_matrix.len() / 3;
-            for i in 0..components {
-              for j in 0..3 {
-                xyz2cam[i][j] = color_matrix[i * 3 + j];
-              }
+          let mut xyz2cam: [[f32; 3]; 4] = [[0.0; 3]; 4];
+          let components = color_matrix.len() / 3;
+          for i in 0..components {
+            for j in 0..3 {
+              xyz2cam[i][j] = color_matrix[i * 3 + j];
             }
+          }
 
-            let mut wb = if rawimage.wb_coeffs[0].is_nan() {
-              [1.0, 1.0, 1.0, 1.0]
-            } else {
-              rawimage.wb_coeffs
-            };
-            if !self.steps.contains(&ProcessingStep::WhiteBalance) {
-              wb = [1.0, 1.0, 1.0, 1.0];
-            }
+          let mut wb = if rawimage.wb_coeffs[0].is_nan() {
+            [1.0, 1.0, 1.0, 1.0]
+          } else {
+            rawimage.wb_coeffs
+          };
+          if !self.steps.contains(&ProcessingStep::WhiteBalance) {
+            wb = [1.0, 1.0, 1.0, 1.0];
+          }
 
-            log::debug!("wb: {:?}, coeff: {:?}", wb, xyz2cam);
+          log::debug!("wb: {:?}, coeff: {:?}", wb, xyz2cam);
 
-            intermediate = match intermediate {
-              Intermediate::Monochrome(_) => intermediate,
-              Intermediate::ThreeColor(pixels) => Intermediate::ThreeColor(map_3ch_to_rgb(&pixels, &wb, xyz2cam)),
-              Intermediate::FourColor(pixels) => Intermediate::ThreeColor(map_4ch_to_rgb(&pixels, &wb, xyz2cam)),
-            };
+          intermediate = match intermediate {
+            Intermediate::Monochrome(_) => intermediate,
+            Intermediate::ThreeColor(pixels) => Intermediate::ThreeColor(map_3ch_to_rgb(&pixels, &wb, xyz2cam)),
+            Intermediate::FourColor(pixels) => Intermediate::ThreeColor(map_4ch_to_rgb(&pixels, &wb, xyz2cam)),
+          };
         } else {
-            log::warn!("Color matrix found but has invalid length. Skipping calibration.");
+          log::warn!("Color matrix found but has invalid length. Skipping calibration.");
         }
       } else {
         log::warn!("Illuminant matrix D65 not found and no fallback available. Skipping calibration.");
