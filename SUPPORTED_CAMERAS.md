@@ -14,12 +14,15 @@
 |Canon                               | Canon EOS 1100D                         | ✅ Yes | all |  |
 |Canon                               | Canon EOS 1200D                         | ✅ Yes | all |  |
 |Canon                               | Canon EOS 1300D                         | ✅ Yes | all |  |
+|Canon                               | Canon EOS 1500D                         | ✅ Yes | all |  |
 |Canon                               | Canon EOS 2000D                         | ✅ Yes | all |  |
 |Canon                               | Canon EOS 200D                          | ✅ Yes | all |  |
+|Canon                               | Canon EOS 200D II                       | ✅ Yes | craw, raw |  |
 |Canon                               | Canon EOS 20D                           | ✅ Yes | all |  |
 |Canon                               | Canon EOS 250D                          | ✅ Yes | craw, raw |  |
 |Canon                               | Canon EOS 3000D                         | ✅ Yes | all |  |
 |Canon                               | Canon EOS 300D DIGITAL                  | ✅ Yes | all |  |
+|Canon                               | Canon EOS 300D Digital                  | ✅ Yes | all |  |
 |Canon                               | Canon EOS 30D                           | ✅ Yes | all |  |
 |Canon                               | Canon EOS 350D DIGITAL                  | ✅ Yes | all |  |
 |Canon                               | Canon EOS 350D Digital                  | ✅ Yes | all |  |
@@ -52,6 +55,7 @@
 |Canon                               | Canon EOS 800D                          | ✅ Yes | all |  |
 |Canon                               | Canon EOS 80D                           | ✅ Yes | sRaw1, sRaw2 |  |
 |Canon                               | Canon EOS 850D                          | ✅ Yes | craw, raw |  |
+|Canon                               | Canon EOS 9000D                         | ✅ Yes | all |  |
 |Canon                               | Canon EOS 90D                           | ✅ Yes | craw, raw |  |
 |Canon                               | Canon EOS D30                           | ✅ Yes | all |  |
 |Canon                               | Canon EOS D60                           | ✅ Yes | all |  |
@@ -71,7 +75,9 @@
 |Canon                               | Canon EOS DIGITAL REBEL XSi             | ✅ Yes | all |  |
 |Canon                               | Canon EOS DIGITAL REBEL XT              | ✅ Yes | all |  |
 |Canon                               | Canon EOS DIGITAL REBEL XTi             | ✅ Yes | all |  |
+|Canon                               | Canon EOS Hi                            | ✅ Yes | all |  |
 |Canon                               | Canon EOS KISS M                        | ✅ Yes | craw, raw |  |
+|Canon                               | Canon EOS KISS M2                       | ✅ Yes | craw, raw |  |
 |Canon                               | Canon EOS Kiss                          | ✅ Yes | all |  |
 |Canon                               | Canon EOS Kiss Digital                  | ✅ Yes | all |  |
 |Canon                               | Canon EOS Kiss Digital F                | ✅ Yes | all |  |
@@ -91,6 +97,8 @@
 |Canon                               | Canon EOS Kiss F                        | ✅ Yes | all |  |
 |Canon                               | Canon EOS Kiss N                        | ✅ Yes | all |  |
 |Canon                               | Canon EOS Kiss X                        | ✅ Yes | all |  |
+|Canon                               | Canon EOS Kiss X10                      | ✅ Yes | craw, raw |  |
+|Canon                               | Canon EOS Kiss X10i                     | ✅ Yes | craw, raw |  |
 |Canon                               | Canon EOS Kiss X2                       | ✅ Yes | all |  |
 |Canon                               | Canon EOS Kiss X3                       | ✅ Yes | all |  |
 |Canon                               | Canon EOS Kiss X4                       | ✅ Yes | all |  |
@@ -103,6 +111,8 @@
 |Canon                               | Canon EOS Kiss X80                      | ✅ Yes | all |  |
 |Canon                               | Canon EOS Kiss X8i                      | ✅ Yes | all |  |
 |Canon                               | Canon EOS Kiss X9                       | ✅ Yes | all |  |
+|Canon                               | Canon EOS Kiss X90                      | ✅ Yes | all |  |
+|Canon                               | Canon EOS Kiss X9i                      | ✅ Yes | all |  |
 |Canon                               | Canon EOS M                             | ✅ Yes | all |  |
 |Canon                               | Canon EOS M10                           | ✅ Yes | all |  |
 |Canon                               | Canon EOS M100                          | ✅ Yes | all |  |
@@ -123,6 +133,7 @@
 |Canon                               | Canon EOS R50                           | ✅ Yes | craw, raw |  |
 |Canon                               | Canon EOS R5m2                          | ✅ Yes | craw, crm, raw | support for CRM raw movie frame extraction, support for CRM raw movie frame extraction, support for CRM raw movie frame extraction, support for CRM raw movie frame extraction |
 |Canon                               | Canon EOS R6                            | ✅ Yes | craw, raw |  |
+|Canon                               | Canon EOS R6 Mark III                   | ✅ Yes | craw, raw |  |
 |Canon                               | Canon EOS R6m2                          | ✅ Yes | craw, raw |  |
 |Canon                               | Canon EOS R7                            | ✅ Yes | craw, raw |  |
 |Canon                               | Canon EOS R8                            | ✅ Yes | craw, raw |  |
@@ -252,8 +263,10 @@
 |FUJIFILM                            | FinePix S5500                           | ✅ Yes | all |  |
 |FUJIFILM                            | FinePix S5600                           | ✅ Yes | all |  |
 |FUJIFILM                            | FinePix S5Pro                           | ✅ Yes | all |  |
+|FUJIFILM                            | FinePix S6000fd                         | ✅ Yes | all |  |
 |FUJIFILM                            | FinePix S6500fd                         | ✅ Yes | all |  |
 |FUJIFILM                            | FinePix S7000                           | ✅ Yes | all |  |
+|FUJIFILM                            | FinePix S9000                           | ✅ Yes | all |  |
 |FUJIFILM                            | FinePix S9500                           | ✅ Yes | all |  |
 |FUJIFILM                            | FinePix S9600                           | ✅ Yes | all |  |
 |FUJIFILM                            | FinePix SL1000                          | ✅ Yes | all |  |
@@ -332,6 +345,7 @@
 |KODAK                               | DCS460D         FILE VERSION 3          | ✅ Yes | all |  |
 |KODAK                               | EOSDCS1B        FILE VERSION 3          | ✅ Yes | all |  |
 |KODAK                               | EOSDCS3C        FILE VERSION 3          | ✅ Yes | all |  |
+|KONICA MINOLTA                      | ALPHA 7D                                | ✅ Yes | all |  |
 |KONICA MINOLTA                      | ALPHA-7 DIGITAL                         | ✅ Yes | all |  |
 |KONICA MINOLTA                      | DYNAX 7D                                | ✅ Yes | all |  |
 |KONICA MINOLTA                      | DiMAGE A200                             | ✅ Yes | all |  |
@@ -356,6 +370,12 @@
 |LEICA                               | V-LUX 4                                 | ✅ Yes | 4:3 |  |
 |LEICA CAMERA AG                     | C-Lux                                   | ✅ Yes | 3:2 |  |
 |LEICA CAMERA AG                     | D-Lux 7                                 | ✅ Yes | 16:9, 1:1, 3:2, 4:3 |  |
+|LEICA CAMERA AG                     | LEICA CL                                | ✅ Yes | dng |  |
+|LEICA CAMERA AG                     | LEICA Q (Typ 116)                       | ✅ Yes | dng |  |
+|LEICA CAMERA AG                     | LEICA Q2                                | ✅ Yes | dng |  |
+|LEICA CAMERA AG                     | LEICA SL (Typ 601)                      | ✅ Yes | dng |  |
+|LEICA CAMERA AG                     | LEICA SL2                               | ✅ Yes | dng |  |
+|LEICA CAMERA AG                     | LEICA X2                                | ✅ Yes | dng |  |
 |LEICA CAMERA AG                     | V-Lux 5                                 | ✅ Yes | 3:2 |  |
 |Leaf                                | Credo 40                                | ✅ Yes | all |  |
 |Leaf                                | Credo 50                                | ✅ Yes | all |  |
@@ -363,6 +383,13 @@
 |Leaf                                | Credo 80                                | ✅ Yes | all |  |
 |Leaf                                | Leaf Aptus 22                           | ✅ Yes | all |  |
 |Leaf                                | Leaf Aptus 75                           | ✅ Yes | all |  |
+|Leica Camera AG                     | LEICA M (Typ 240)                       | ✅ Yes | dng |  |
+|Leica Camera AG                     | LEICA M MONOCHROM (Typ 246)             | ✅ Yes | dng |  |
+|Leica Camera AG                     | LEICA M10                               | ✅ Yes | dng |  |
+|Leica Camera AG                     | LEICA M10-R                             | ✅ Yes | dng |  |
+|Leica Camera AG                     | M Monochrom                             | ✅ Yes | dng |  |
+|Leica Camera AG                     | M8 Digital Camera                       | ✅ Yes | dng |  |
+|Leica Camera AG                     | M9 Digital Camera                       | ✅ Yes | dng |  |
 |Mamiya-OP Co.,Ltd.                  | MAMIYA ZD                               | ✅ Yes | all |  |
 |Minolta Co., Ltd.                   | DiMAGE 7                                | ✅ Yes | all |  |
 |Minolta Co., Ltd.                   | DiMAGE 7Hi                              | ✅ Yes | all |  |
@@ -382,6 +409,7 @@
 |NIKON CORPORATION                   | COOLPIX A                               | ✅ Yes | 14bit |  |
 |NIKON CORPORATION                   | COOLPIX A1000                           | ✅ Yes | 12bit |  |
 |NIKON CORPORATION                   | COOLPIX P1000                           | ✅ Yes | 12bit |  |
+|NIKON CORPORATION                   | COOLPIX P1100                           | ✅ Yes | 12bit |  |
 |NIKON CORPORATION                   | COOLPIX P950                            | ✅ Yes | 12bit |  |
 |NIKON CORPORATION                   | NIKON 1 AW1                             | ✅ Yes | 12bit |  |
 |NIKON CORPORATION                   | NIKON 1 J1                              | ✅ Yes | 12bit |  |
@@ -458,6 +486,7 @@
 |NIKON CORPORATION                   | NIKON Z50_2                             | ✅ Yes | 14bit |  |
 |NIKON CORPORATION                   | NIKON Z5_2                              | ✅ Yes | 14bit |  |
 |NIKON CORPORATION                   | NIKON Z6_3                              | ✅ Yes | 14bit |  |
+|Nikon                               | Nikon SUPER COOLSCAN 5000 ED            | ✅ Yes | 16bit |  |
 |OLYMPUS CORPORATION                 | C5060WZ                                 | ✅ Yes | all |  |
 |OLYMPUS CORPORATION                 | C8080WZ                                 | ✅ Yes | all |  |
 |OLYMPUS CORPORATION                 | E-1                                     | ✅ Yes | all |  |
@@ -512,6 +541,7 @@
 |OLYMPUS IMAGING CORP.               | SP350                                   | ✅ Yes | all |  |
 |OLYMPUS IMAGING CORP.               | SP500UZ                                 | ✅ Yes | all |  |
 |OLYMPUS IMAGING CORP.               | SP510UZ                                 | ✅ Yes | all |  |
+|OLYMPUS IMAGING CORP.               | SP550UZ                                 | ✅ Yes | all |  |
 |OLYMPUS IMAGING CORP.               | SP565UZ                                 | ✅ Yes | all |  |
 |OLYMPUS IMAGING CORP.               | SP570UZ                                 | ✅ Yes | all |  |
 |OLYMPUS IMAGING CORP.               | STYLUS1                                 | ✅ Yes | all |  |
@@ -548,8 +578,13 @@
 |Panasonic                           | DC-FZ10002                              | ✅ Yes | 16:9, 1:1, 3:2, 4:3 |  |
 |Panasonic                           | DC-FZ45                                 | ✅ Yes | 16:9, 1:1, 3:2, 4:3 |  |
 |Panasonic                           | DC-FZ80                                 | ✅ Yes | 4:3 |  |
+|Panasonic                           | DC-FZ80D                                | ✅ Yes | 4:3 |  |
 |Panasonic                           | DC-FZ82                                 | ✅ Yes | 4:3 |  |
+|Panasonic                           | DC-FZ82D                                | ✅ Yes | 4:3 |  |
+|Panasonic                           | DC-FZ85                                 | ✅ Yes | 4:3 |  |
+|Panasonic                           | DC-FZ85D                                | ✅ Yes | 4:3 |  |
 |Panasonic                           | DC-G100                                 | ✅ Yes | 4:3 |  |
+|Panasonic                           | DC-G100D                                | ✅ Yes | 4:3 |  |
 |Panasonic                           | DC-G110                                 | ✅ Yes | 4:3 |  |
 |Panasonic                           | DC-G9                                   | ✅ Yes | 4:3 |  |
 |Panasonic                           | DC-G90                                  | ✅ Yes | 4:3 |  |
@@ -570,9 +605,11 @@
 |Panasonic                           | DC-LX100M2                              | ✅ Yes | 16:9, 1:1, 3:2, 4:3 |  |
 |Panasonic                           | DC-S1                                   | ✅ Yes | 3:2 |  |
 |Panasonic                           | DC-S1H                                  | ✅ Yes | 3:2 |  |
+|Panasonic                           | DC-S1M2ES                               | ✅ Yes | 3:2 |  |
 |Panasonic                           | DC-S1R                                  | ✅ Yes | 3:2 |  |
 |Panasonic                           | DC-S1RM2                                | ✅ Yes | 3:2 |  |
 |Panasonic                           | DC-S5                                   | ✅ Yes | 3:2 |  |
+|Panasonic                           | DC-S5D                                  | ✅ Yes | 3:2 |  |
 |Panasonic                           | DC-S5M2                                 | ✅ Yes | 3:2 |  |
 |Panasonic                           | DC-S5M2X                                | ✅ Yes | 3:2 |  |
 |Panasonic                           | DC-S9                                   | ✅ Yes | 3:2 |  |
@@ -584,14 +621,19 @@
 |Panasonic                           | DC-TZ220D                               | ✅ Yes | 3:2 |  |
 |Panasonic                           | DC-TZ90                                 | ✅ Yes | 4:3 |  |
 |Panasonic                           | DC-TZ91                                 | ✅ Yes | 4:3 |  |
+|Panasonic                           | DC-TZ92                                 | ✅ Yes | 4:3 |  |
+|Panasonic                           | DC-TZ93                                 | ✅ Yes | 4:3 |  |
 |Panasonic                           | DC-TZ95                                 | ✅ Yes | 4:3 |  |
 |Panasonic                           | DC-TZ95D                                | ✅ Yes | 4:3 |  |
 |Panasonic                           | DC-TZ96                                 | ✅ Yes | 4:3 |  |
+|Panasonic                           | DC-TZ99                                 | ✅ Yes | 4:3 |  |
 |Panasonic                           | DC-ZS200                                | ✅ Yes | 3:2 |  |
 |Panasonic                           | DC-ZS200D                               | ✅ Yes | 3:2 |  |
 |Panasonic                           | DC-ZS220                                | ✅ Yes | 3:2 |  |
 |Panasonic                           | DC-ZS220D                               | ✅ Yes | 3:2 |  |
+|Panasonic                           | DC-ZS70                                 | ✅ Yes | 4:3 |  |
 |Panasonic                           | DC-ZS80                                 | ✅ Yes | 4:3 |  |
+|Panasonic                           | DC-ZS99                                 | ✅ Yes | 4:3 |  |
 |Panasonic                           | DMC-CM1                                 | ✅ Yes | 16:9, 1:1, 3:2, 4:3 |  |
 |Panasonic                           | DMC-FX150                               | ✅ Yes | 16:9, 3:2, 4:3 |  |
 |Panasonic                           | DMC-FZ100                               | ✅ Yes | 16:9, 1:1, 3:2, 4:3 |  |
@@ -704,8 +746,10 @@
 |SAMSUNG                             | EX2F                                    | ✅ Yes | all |  |
 |SAMSUNG                             | NX mini                                 | ✅ Yes | all |  |
 |SAMSUNG                             | NX1                                     | ✅ Yes | all |  |
+|SAMSUNG                             | NX10                                    | ✅ Yes | all |  |
 |SAMSUNG                             | NX100                                   | ✅ Yes | all |  |
 |SAMSUNG                             | NX1000                                  | ✅ Yes | all |  |
+|SAMSUNG                             | NX11                                    | ✅ Yes | all |  |
 |SAMSUNG                             | NX1100                                  | ✅ Yes | all |  |
 |SAMSUNG                             | NX20                                    | ✅ Yes | all |  |
 |SAMSUNG                             | NX200                                   | ✅ Yes | all |  |
@@ -716,6 +760,7 @@
 |SAMSUNG                             | NX3000                                  | ✅ Yes | all |  |
 |SAMSUNG                             | NX300M                                  | ✅ Yes | all |  |
 |SAMSUNG                             | NX3300                                  | ✅ Yes | all |  |
+|SAMSUNG                             | NX5                                     | ✅ Yes | all |  |
 |SAMSUNG                             | NX500                                   | ✅ Yes | all |  |
 |SAMSUNG                             | WB2000                                  | ✅ Yes | all |  |
 |SEIKO EPSON CORP.                   | R-D1                                    | ✅ Yes | all |  |
@@ -764,6 +809,7 @@
 |SONY                                | ILCA-77M2                               | ✅ Yes | all |  |
 |SONY                                | ILCA-99M2                               | ✅ Yes | all |  |
 |SONY                                | ILCE-1                                  | ✅ Yes | all |  |
+|SONY                                | ILCE-1M2                                | ✅ Yes | all |  |
 |SONY                                | ILCE-3000                               | ✅ Yes | all |  |
 |SONY                                | ILCE-3500                               | ✅ Yes | all |  |
 |SONY                                | ILCE-5000                               | ✅ Yes | all |  |
@@ -771,8 +817,10 @@
 |SONY                                | ILCE-6000                               | ✅ Yes | all |  |
 |SONY                                | ILCE-6001                               | ✅ Yes | all |  |
 |SONY                                | ILCE-6100                               | ✅ Yes | all |  |
+|SONY                                | ILCE-6100A                              | ✅ Yes | all |  |
 |SONY                                | ILCE-6300                               | ✅ Yes | all |  |
 |SONY                                | ILCE-6400                               | ✅ Yes | all |  |
+|SONY                                | ILCE-6400A                              | ✅ Yes | all |  |
 |SONY                                | ILCE-6500                               | ✅ Yes | all |  |
 |SONY                                | ILCE-6600                               | ✅ Yes | all |  |
 |SONY                                | ILCE-6700                               | ✅ Yes | all |  |
@@ -799,6 +847,7 @@
 |SONY                                | ILCE-QX1                                | ✅ Yes | all |  |
 |SONY                                | ILME-FX3                                | ✅ Yes | all |  |
 |SONY                                | ILME-FX30                               | ✅ Yes | all |  |
+|SONY                                | ILME-FX3A                               | ✅ Yes | all |  |
 |SONY                                | NEX-3                                   | ✅ Yes | all |  |
 |SONY                                | NEX-3N                                  | ✅ Yes | all |  |
 |SONY                                | NEX-5                                   | ✅ Yes | all |  |
@@ -824,6 +873,8 @@
 |SONY                                | SLT-A99V                                | ✅ Yes | all |  |
 |SONY                                | UMC-R10C                                | ✅ Yes | all |  |
 |SONY                                | ZV-1                                    | ✅ Yes | all |  |
+|SONY                                | ZV-1A                                   | ✅ Yes | all |  |
+|SONY                                | ZV-1M2                                  | ✅ Yes | all |  |
 |SONY                                | ZV-E1                                   | ✅ Yes | all |  |
 |SONY                                | ZV-E10                                  | ✅ Yes | all |  |
 |SONY                                | ZV-E10M2                                | ✅ Yes | all |  |

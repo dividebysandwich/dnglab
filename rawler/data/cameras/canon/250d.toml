@@ -7,7 +7,7 @@ color_pattern = "RGGB"
 model_aliases = [
   ["Canon EOS Rebel SL3", "EOS Rebel SL3"],
   ["Canon EOS Kiss X10", "EOS Kiss X10"],
-  ["Canon EOS 200D II", "EOS 200D II"]
+  ["Canon EOS 200D II", "EOS 200D Mark II"]
 ]
 
 [cameras.color_matrix]
