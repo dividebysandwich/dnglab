@@ -277,10 +277,13 @@ pub(crate) trait FloatingPointParameters {
 
   const STORAGE_BYTES: usize = Self::STORAGE_WIDTH.div_ceil(u8::BITS as usize);
 
+  #[allow(dead_code)]
   const SIGN_BITS: usize = 1;
+  #[allow(dead_code)]
   const PRECISION: usize = Self::FRACTION_WIDTH + 1;
   const EXPONENT_MAX: usize = (1 << (Self::EXPONENT_WIDTH - 1)) - 1;
   const BIAS: i32 = Self::EXPONENT_MAX as i32;
+  #[allow(dead_code)]
   const FRACTION_POS: usize = 0; // FractionPos is always 0.
   const EXPONENT_POS: usize = Self::FRACTION_WIDTH;
   const SIGN_BIT_POS: usize = Self::STORAGE_WIDTH - 1;
