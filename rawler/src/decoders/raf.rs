@@ -320,17 +320,13 @@ impl<'a> Decoder for RafDecoder<'a> {
         _ => return Err(RawlerError::unsupported(&self.camera, format!("RAF: Don't know how to decode bps {}", bps))),
       }
     } else if self.camera.clean_model == "DBP for GX680" {
-      assert_eq!(bps, 16);
+            assert_eq!(bps, 16);
       dbp::decode_dbp(&src, width, height, dummy)?
     } else if src.len() < bps * width * height / 8 {
       if !dummy {
-        //if let Some(camera) = rawloader.check_supported(&ifd)
-        if let Some(cam_compr) = self.camera_compressed.clone() {
-          camera = cam_compr;
-        }
         decompress_fuji(&src, width, height, bps, &corrected_cfa)?
       } else {
-        alloc_image_plain!(width, height, dummy)
+                alloc_image_plain!(width, height, dummy)
       }
     } else {
       match bps {
@@ -360,17 +356,14 @@ impl<'a> Decoder for RafDecoder<'a> {
     let cpp = 1;
     if self.camera.find_hint("fuji_rotation") || self.camera.find_hint("fuji_rotation_alt") {
       log::debug!("Apply Fuji image rotation");
-      let (rotated, fuji_rot_width) = if rotate_for_dng {
-        let pix = if self.camera.find_hint("fuji_rotation") {
+      let rotated = if rotate_for_dng {
+        if self.camera.find_hint("fuji_rotation") {
           fuji_raw_rotate(&image, dummy) // Only required for fuji_rotation
         } else {
           image
-        };
-        (pix, None)
+        }
       } else {
-        let alt_layout = self.get_alt_layout();
-        let (pix, t) = self.rotate_image(image.pixels(), &self.camera, alt_layout, width, height, dummy)?;
-        (pix, Some(t))
+        self.rotate_image(image.pixels(), &self.camera, width, height, dummy)?
       };
 
       camera.cfa = corrected_cfa;
@@ -407,7 +400,7 @@ impl<'a> Decoder for RafDecoder<'a> {
     } else {
       //ok_image(self.camera.clone(), width, height, cpp, self.get_wb()?, image.into_inner())
 
-      //let mut camera = self.camera.clone();
+      let mut camera = self.camera.clone();
       camera.cfa = corrected_cfa;
       let whitelevel = if self.camera.whitelevel.is_none() {
         match bps {
@@ -525,11 +518,13 @@ impl<'a> RafDecoder<'a> {
   /// Nearly all models have this parameter, except of FinePix HS10
   fn get_crop(&self) -> Result<Option<Rect>> {
     if let Some(raf) = &self.ifd.sub_ifds().get(&RAF_TAG_VIRTUAL_RAF_DATA).and_then(|ifds| ifds.get(0)) {
-      let crops = raf.get_entry(RafTags::RawImageCropTopLeft);
+      //let crops = raf.get_entry(RafTags::RawImageCropTopLeft);
       let size = raf.get_entry(RafTags::RawImageCroppedSize);
-      if let (Some(crops), Some(size)) = (crops, size) {
+//      if let (Some(crops), Some(size)) = (crops, size) {
+      if let Some(size) = size {
         return Ok(Some(Rect::new(
-          Point::new(crops.force_usize(1), crops.force_usize(0)),
+//          Point::new(crops.force_usize(1), crops.force_usize(0)),
+          Point::new(0, 0),
           Dim2::new(size.force_usize(1), size.force_usize(0)),
         )));
       }
@@ -542,26 +537,26 @@ impl<'a> RafDecoder<'a> {
   /// For unknown reason, the values are stored in reverse order and
   /// also falsely reported by exiftoool.
   fn get_xtrans_cfa(&self) -> Result<Option<CFA>> {
-    Ok(
+        Ok(
       if let Some(raf) = &self
         .ifd
         .sub_ifds()
         .get(&RAF_TAG_VIRTUAL_RAF_DATA)
         .and_then(|ifds| ifds.get(0).and_then(|ifd| ifd.get_entry(RafTags::XTransLayout)))
       {
-        match &raf.value {
+                match &raf.value {
           Value::Byte(data) => {
             let patname: String = data
               .iter()
               .rev()
               .map(|v| match v {
-                0 => 'R',
+                0 => 'B',
                 1 => 'G',
-                2 => 'B',
+                2 => 'R',
                 _ => 'X', // Unknown, let CFA::new() fail...
               })
               .collect();
-            Some(CFA::new(&patname))
+                        Some(CFA::new(&patname))
           }
           _ => {
             return Err("Invalid XTransLayout data type".into());
