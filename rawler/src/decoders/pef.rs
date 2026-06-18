@@ -83,7 +83,7 @@ impl<'a> PefDecoder<'a> {
   }
 }
 
-/// CR2 format encapsulation for analyzer
+/// PEF format encapsulation for analyzer
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PefFormat {
@@ -164,7 +164,7 @@ impl<'a> Decoder for PefDecoder<'a> {
           None
         }
       }
-      _ => todo!(),
+      _ => None,
     };
 
     if let Some(image) = image {
@@ -184,7 +184,7 @@ impl<'a> Decoder for PefDecoder<'a> {
       }
     }
 
-    todo!()
+    Ok(None)
   }
 
   fn raw_metadata(&self, _file: &RawSource, _params: &RawDecodeParams) -> Result<RawMetadata> {

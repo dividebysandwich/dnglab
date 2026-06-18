@@ -183,18 +183,20 @@ impl<'a> Decoder for ArwDecoder<'a> {
       _ => return Err(RawlerError::DecoderFailed(format!("ARW: Don't know how to decode type {}", compression))),
     };
 
-    let blacklevel = black.map(|black| match cpp {
-      1 => BlackLevel::new(&black, self.camera.cfa.width, self.camera.cfa.height, cpp),
-      // For YUV data, the blacklevel needs to be multiplicated by 2
-      3 => BlackLevel::new(&[black[0] * 2, black[0] * 2, black[0] * 2], 1, 1, cpp),
-      _ => panic!("Unsupported cpp == {}", cpp),
-    });
+    let blacklevel = black
+      .map(|black| match cpp {
+        1 => Ok(BlackLevel::new(&black, self.camera.cfa.width, self.camera.cfa.height, cpp)),
+        // For YUV data, the blacklevel needs to be multiplicated by 2
+        3 => Ok(BlackLevel::new(&[black[0] * 2, black[0] * 2, black[0] * 2], 1, 1, cpp)),
+        _ => Err(RawlerError::DecoderFailed(format!("ARW: Unsupported cpp: {}", cpp))),
+      })
+      .transpose()?;
     let whitelevel = white.map(|white| WhiteLevel(vec![white as u32; cpp]));
 
     let photometric = match cpp {
       1 => RawPhotometricInterpretation::Cfa(CFAConfig::new_from_camera(&self.camera)),
       3 => RawPhotometricInterpretation::LinearRaw,
-      _ => todo!(),
+      _ => return Err(RawlerError::DecoderFailed(format!("ARW: Unsupported cpp: {}", cpp))),
     };
 
     let mut img = RawImage::new(self.camera.clone(), image, cpp, params.wb, photometric, blacklevel, whitelevel, dummy);
@@ -357,7 +359,7 @@ impl<'a> ArwDecoder<'a> {
         // WBG
         wb_coeffs[0] = LEu16(buf, currpos + 12) as f32;
         wb_coeffs[1] = LEu16(buf, currpos + 14) as f32;
-        wb_coeffs[2] = LEu16(buf, currpos + 14) as f32;
+        wb_coeffs[2] = LEu16(buf, currpos + 16) as f32;
         wb_coeffs[3] = LEu16(buf, currpos + 18) as f32;
         break;
       }
@@ -804,7 +806,7 @@ struct ArwImageParams {
 
 crate::tags::tiff_tag_enum!(SR2SubIFD);
 
-/// Specific Canon CR2 Makernotes tags.
+/// Specific Sony SR2 sub-IFD tags.
 /// These are only related to the Makernote IFD.
 #[derive(Debug, Copy, Clone, PartialEq, enumn::N)]
 #[repr(u16)]

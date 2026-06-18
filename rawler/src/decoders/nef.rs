@@ -229,7 +229,9 @@ impl<'a> Decoder for NefDecoder<'a> {
     let coeffs = normalize_wb(self.get_wb()?);
     debug!("WB coeff: {:?}", coeffs);
 
-    assert_eq!(self.tiff.little_endian(), self.makernote.endian == Endian::Little);
+    if self.tiff.little_endian() != (self.makernote.endian == Endian::Little) {
+      return Err(RawlerError::DecoderFailed("NEF: TIFF and makernote endianness mismatch".to_string()));
+    }
 
     let image = if self.camera.model == "NIKON D100" {
       width = 3040;
@@ -287,7 +289,13 @@ impl<'a> Decoder for NefDecoder<'a> {
       return Err(RawlerError::unsupported(&self.camera, format!("NEF: Don't know compression {}", compression)));
     };
 
-    assert_eq!(image.width, width * cpp);
+    if image.width != width * cpp {
+      return Err(RawlerError::DecoderFailed(format!(
+        "NEF: decompressed width {} != expected {}",
+        image.width,
+        width * cpp
+      )));
+    }
     let blacklevel = self.get_blacklevel(bps)?;
     let whitelevel = None;
     let photometric = match cpp {
@@ -597,7 +605,9 @@ impl<'a> NefDecoder<'a> {
 
     let mut huff_select = 0;
     if v0 == 73 || v1 == 88 {
-      assert!(stream.remaining_bytes() >= 2110);
+      if stream.remaining_bytes() < 2110 {
+        return Err("NEF: metadata stream too short for v0==73 or v1==88".to_string());
+      }
       stream.consume_bytes(2110);
     }
     if v0 == 70 {

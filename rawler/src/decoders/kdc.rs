@@ -65,7 +65,12 @@ impl<'a> Decoder for KdcDecoder<'a> {
     if self.camera.clean_model == "DC120" {
       let width = 848;
       let height = 976;
-      let raw = self.tiff.find_ifds_with_tag(TiffCommonTag::CFAPattern)[0];
+      let raw = self
+        .tiff
+        .find_ifds_with_tag(TiffCommonTag::CFAPattern)
+        .into_iter()
+        .next()
+        .ok_or_else(|| RawlerError::DecoderFailed("KDC DC120: no IFD with CFAPattern".to_string()))?;
       let off = fetch_tiff_tag!(raw, TiffCommonTag::StripOffsets).force_usize(0);
       let mut white = self.camera.whitelevel.clone().expect("KDC needs a whitelevel in camera config")[0];
       let src = file.subview_until_eof(off as u64)?;
@@ -90,7 +95,12 @@ impl<'a> Decoder for KdcDecoder<'a> {
     }
 
     if self.camera.clean_model == "DC50" {
-      let raw = self.tiff.find_ifds_with_tag(TiffCommonTag::CFAPattern)[0];
+      let raw = self
+        .tiff
+        .find_ifds_with_tag(TiffCommonTag::CFAPattern)
+        .into_iter()
+        .next()
+        .ok_or_else(|| RawlerError::DecoderFailed("KDC DC50: no IFD with CFAPattern".to_string()))?;
       let width = self.camera.raw_width;
       let height = self.camera.raw_height;
       let off = fetch_tiff_tag!(raw, TiffCommonTag::StripOffsets).force_usize(0);
@@ -119,7 +129,7 @@ impl<'a> Decoder for KdcDecoder<'a> {
     let height = fetch_tiff_tag!(raw, TiffCommonTag::KdcLength).force_usize(0) + 70;
     let offset = fetch_tiff_tag!(raw, TiffCommonTag::KdcOffset);
     if offset.count() < 13 {
-      panic!("KDC Decoder: Couldn't find the KDC offset");
+      return Err(RawlerError::DecoderFailed("KDC Decoder: Couldn't find the KDC offset".to_string()));
     }
     let mut off = offset.force_usize(4) + offset.force_usize(12);
 

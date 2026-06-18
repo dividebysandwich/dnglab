@@ -19,7 +19,6 @@ use std::{
   time::SystemTime,
 };
 use std::{path::PathBuf, time::Instant};
-use tokio::task::spawn_blocking;
 
 /// Job for converting RAW to DNG
 #[derive(Debug, Clone)]
@@ -69,9 +68,6 @@ pub(crate) fn copy_mtime_from_rawsource(rawfile: &RawSource, file: &File, fallba
 
 impl Raw2DngJob {
   fn internal_exec(&self) -> Result<JobResult> {
-    if self.output.exists() && !self.replace {
-      return Err(AppError::AlreadyExists(self.output.clone()));
-    }
     // File name for embedding
     let orig_filename = self
       .input
@@ -81,15 +77,36 @@ impl Raw2DngJob {
       .to_string_lossy()
       .to_string();
 
-    let mut dng = BufWriter::new(File::create(&self.output)?);
+    if self.replace && self.output.exists() {
+      remove_file(&self.output)?;
+    }
+    // `create_new(true)` (= `O_EXCL`) is the single source of truth for
+    // "don't clobber". An `AlreadyExists` error here is the common case
+    // when `--override` is off; surface it as `AppError::AlreadyExists`
+    // rather than letting it surface as a raw `io::Error`. This also
+    // eliminates a redundant pre-flight `stat()` syscall per job.
+    let file = match std::fs::OpenOptions::new().write(true).create_new(true).open(&self.output) {
+      Ok(f) => f,
+      Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
+        return Err(AppError::AlreadyExists(self.output.clone()));
+      }
+      Err(e) => return Err(e.into()),
+    };
+    if let Err(err) = file.try_lock() {
+      return Err(AppError::General(format!("Cannot acquire exclusive lock on {}: {err}", self.output.display())));
+    }
+    let mut dng = BufWriter::new(file);
 
     match convert_raw_file(&self.input, &mut dng, &self.params) {
-      Ok(_) => {
+      Ok(info) => {
         let file = dng.into_inner().map_err(|e| AppError::General(format!("Can't access DNG inner file: {e}")))?;
         if self.params.keep_mtime {
-          let file_mtime = std::fs::metadata(&self.input).and_then(|md| md.modified()).ok();
-          let rawfile = RawSource::new(&self.input)?;
-          copy_mtime_from_rawsource(&rawfile, &file, file_mtime, &self.params)?;
+          let fallback = std::fs::metadata(&self.input).and_then(|md| md.modified()).ok();
+          if let Some(ts) = info.last_modified.or(fallback) {
+            file.set_modified(ts)?;
+            let datetime: chrono::DateTime<Local> = ts.into();
+            log::debug!("Set mtime for DNG file to {}", datetime.format("%d/%m/%Y %T"));
+          }
         }
         drop(file);
         Ok(JobResult {
@@ -129,8 +146,22 @@ impl Job for Raw2DngJob {
     debug!("Job running: input: {:?}, output: {:?}", self.input, self.output);
     let now = Instant::now();
     let cp = self.clone();
-    let handle = spawn_blocking(move || cp.internal_exec());
-    match handle.await {
+
+    // Run the CPU-bound conversion on rayon's global pool rather than tokio's
+    // blocking pool. Rationale:
+    //   - The work inside `internal_exec` already fans out through `par_iter`
+    //     on rayon for LJPEG tile compression. Dispatching the outer job onto
+    //     rayon too keeps every CPU thread under one work-stealing scheduler,
+    //     avoiding the "tokio-blocking-thread holds the call frame while
+    //     rayon does the work on different threads" double-dispatch.
+    //   - Tokio's blocking pool is sized for I/O fanout.
+    // A tokio oneshot bridges the result back into the async driver.
+    let (tx, rx) = tokio::sync::oneshot::channel();
+    rayon::spawn(move || {
+      let _ = tx.send(cp.internal_exec());
+    });
+
+    match rx.await {
       Ok(Ok(mut stat)) => {
         stat.duration = now.elapsed().as_secs_f32();
         eprintln!("Writing DNG output file: {}", stat.job.output.display());
@@ -141,10 +172,10 @@ impl Job for Raw2DngJob {
         duration: now.elapsed().as_secs_f32(),
         error: Some(e),
       },
-      Err(e) => JobResult {
+      Err(err) => JobResult {
         job: self.clone(),
         duration: now.elapsed().as_secs_f32(),
-        error: Some(AppError::General(format!("Join handle failed: {:?}", e))),
+        error: Some(AppError::General(format!("Rayon worker panicked before completing: {err}"))),
       },
     }
   }

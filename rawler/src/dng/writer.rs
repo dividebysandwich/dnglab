@@ -341,7 +341,7 @@ where
     let now = Instant::now();
     let offset = self.writer.dng.position()?;
     // TODO: improve offsets?
-    let jpeg_encoder = JpegEncoder::new_with_quality(&mut self.writer.dng.writer, (quality * 100.0).max(100.0) as u8);
+    let jpeg_encoder = JpegEncoder::new_with_quality(&mut self.writer.dng.writer, (quality * 100.0).clamp(0.0, 100.0) as u8);
     preview_img
       .write_with_encoder(jpeg_encoder)
       .map_err(|err| io::Error::new(io::ErrorKind::Other, format!("Failed to write jpeg preview: {:?}", err)))?;
@@ -575,13 +575,7 @@ where
 
   let lj92_data = match rawimage.data {
     RawImageData::Integer(ref data) => {
-      // Inject black pixel data for testing purposes.
-      // let data = vec![0x0000; data.len()];
-      //let tiled_data = TiledData::new(&data, rawimage.width, rawimage.height, rawimage.cpp);
-
       // Only merge two lines into one for higher predictors, if image is CFA
-
-      let tiled_data: Vec<Vec<u16>> = ImageTiler::new(data, rawimage.width, rawimage.height, rawimage.cpp, tile_w, tile_h).collect();
 
       let (j_width, j_height, components, realign) = match &rawimage.photometric {
         RawPhotometricInterpretation::BlackIsZero => {
@@ -604,10 +598,18 @@ where
 
       debug!("LJPEG compression: bit depth: {}", rawimage.bps);
 
-      let tiles_compr: Vec<Vec<u8>> = tiled_data
-        .par_iter()
-        .map(|tile| {
-          let state = LjpegCompressor::new(tile, j_width * realign, j_height / realign, components, rawimage.bps as u8, predictor, 0, 0)
+      // Build and compress each tile in one parallel pass: tile materialization
+      // overlaps with LJPEG encoding instead of pre-collecting `Vec<Vec<u16>>`
+      // for the whole image. Peak memory drops from O(image) uncompressed
+      // staging to roughly O(threads × tile).
+      let tiler = ImageTiler::new(data, rawimage.width, rawimage.height, rawimage.cpp, tile_w, tile_h);
+      let n_tiles = tiler.tile_count();
+      let bps = rawimage.bps as u8;
+      let tiles_compr: Vec<Vec<u8>> = (0..n_tiles)
+        .into_par_iter()
+        .map(|idx| {
+          let tile = tiler.build_tile(idx);
+          let state = LjpegCompressor::new(&tile, j_width * realign, j_height / realign, components, bps, predictor, 0, 0)
             .map_err(|e| DngError::General(format!("LJPEG compressor init failed: {}", e)))?;
           state.encode().map_err(|e| DngError::General(format!("LJPEG encoding failed: {}", e)))
         })
@@ -716,34 +718,35 @@ mod tests {
     Ok(())
   }
 
-  #[cfg(feature = "samplecheck")]
+  #[cfg(feature = "rawdb")]
   #[test]
   fn convert_canon_cr3_to_dng() -> std::result::Result<(), Box<dyn std::error::Error>> {
     use crate::{
       decoders::RawDecodeParams,
+      devtools::rawdb::{get_rawdb_cache, rawdb_ensure_file},
       dng::{DNG_VERSION_V1_4, PREVIEW_JPEG_QUALITY},
       rawsource::RawSource,
     };
     use std::{
       fs::File,
       io::{BufReader, BufWriter},
-      path::PathBuf,
     };
 
-    let mut rawdb = PathBuf::from(std::env::var("RAWLER_RAWDB").expect("RAWLER_RAWDB variable must be set in order to run RAW test!"));
-    rawdb.push("cameras/Canon/EOS R6/raw_modes/Canon EOS R6_RAW_ISO_100_nocrop_nodual.CR3");
+    let rawdb_cache = get_rawdb_cache();
+    let raw_file = rawdb_ensure_file(&rawdb_cache, "Canon", "EOS R6", "raw_modes/Canon EOS R6_RAW_ISO_100_nocrop_nodual.CR3")?;
 
-    let rawfile = RawSource::new(&rawdb)?;
+    let raw_source = RawSource::new(&raw_file)?;
+    let orig_file = File::open(&raw_file).expect("File missing");
 
-    let original_thread = std::thread::spawn(|| OriginalCompressed::compress(&mut BufReader::new(File::open(rawdb).unwrap())));
+    let original_thread = std::thread::spawn(move || OriginalCompressed::compress(&mut BufReader::new(orig_file)));
 
-    let decoder = crate::get_decoder(&rawfile)?;
+    let decoder = crate::get_decoder(&raw_source)?;
 
-    let rawimage = decoder.raw_image(&rawfile, &RawDecodeParams::default(), false)?;
+    let rawimage = decoder.raw_image(&raw_source, &RawDecodeParams::default(), false)?;
 
-    let full_image = decoder.preview_image(&rawfile, &RawDecodeParams::default())?.unwrap();
+    let full_image = decoder.preview_image(&raw_source, &RawDecodeParams::default())?.unwrap();
 
-    let metadata = decoder.raw_metadata(&rawfile, &RawDecodeParams::default())?;
+    let metadata = decoder.raw_metadata(&raw_source, &RawDecodeParams::default())?;
 
     let predictor = 1;
 
@@ -767,7 +770,7 @@ mod tests {
 
     dng.load_metadata(&metadata)?;
 
-    if let Some(xpacket) = decoder.xpacket(&rawfile, &RawDecodeParams::default())? {
+    if let Some(xpacket) = decoder.xpacket(&raw_source, &RawDecodeParams::default())? {
       dng.xpacket(xpacket)?;
     }
 
