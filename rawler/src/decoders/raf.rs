@@ -356,14 +356,17 @@ impl<'a> Decoder for RafDecoder<'a> {
     let cpp = 1;
     if self.camera.find_hint("fuji_rotation") || self.camera.find_hint("fuji_rotation_alt") {
       log::debug!("Apply Fuji image rotation");
-      let rotated = if rotate_for_dng {
-        if self.camera.find_hint("fuji_rotation") {
+      let (rotated, fuji_rot_width) = if rotate_for_dng {
+        let pix = if self.camera.find_hint("fuji_rotation") {
           fuji_raw_rotate(&image, dummy) // Only required for fuji_rotation
         } else {
           image
-        }
+        };
+        (pix, None)
       } else {
-        self.rotate_image(image.pixels(), &self.camera, width, height, dummy)?
+        let alt_layout = self.get_alt_layout();
+        let (pix, t) = self.rotate_image(image.pixels(), &self.camera, alt_layout, width, height, dummy)?;
+        (pix, Some(t))
       };
 
       camera.cfa = corrected_cfa;
