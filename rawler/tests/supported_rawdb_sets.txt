@@ -111,6 +111,7 @@ Canon/EOS REBEL T7i/raw_modes
 Canon/EOS Rebel T7/raw_modes
 Canon/EOS RP/raw_modes
 Canon/EOS R/raw_modes
+Canon/EOS C50/raw_modes
 Canon/IXUS900Ti/raw_modes
 Canon/IXY 220F/raw_modes
 Canon/PowerShot A480/raw_modes
@@ -327,6 +328,7 @@ Sony/DSC-RX100/raw_modes
 Sony/DSC-RX10M2/raw_modes
 Sony/DSC-RX10M3/raw_modes
 Sony/DSC-RX10M4/raw_modes
+Sony/DSC-RX10M5/raw_modes
 Sony/DSC-RX10/raw_modes
 Sony/DSC-RX1/raw_modes
 Sony/DSC-RX1RM2/raw_modes
@@ -384,6 +386,7 @@ Sony/ILCE-7RM4A/raw_modes
 Sony/ILCE-7RM4/raw_modes
 Sony/ILCE-7RM5/raw_modes
 Sony/ILCE-7RM5/yuv
+Sony/ILCE-7RM6/raw_modes
 Sony/ILCE-7R/raw_modes
 Sony/ILCE-7SM2/raw_modes
 Sony/ILCE-7SM3/raw_modes
@@ -574,6 +577,7 @@ Panasonic/DC-GX850/raw_modes
 Panasonic/DC-GX880/raw_modes
 Panasonic/DC-GX9/raw_modes
 Panasonic/DC-LX100M2/raw_modes
+Panasonic/DC-L10/raw_modes
 Panasonic/DC-S1H/raw_modes
 Panasonic/DC-S1/raw_modes
 Panasonic/DC-S1M2/raw_modes

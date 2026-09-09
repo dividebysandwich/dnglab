@@ -192,6 +192,10 @@ mod canon {
     super::super::rawdb_test_file!("Canon", "EOS 90D", canon_eos_90d_craw_iso_100_nocrop_nodual_cr3, "raw_modes/Canon EOS 90D_CRAW_ISO_100_nocrop_nodual.CR3");
     super::super::rawdb_test_file!("Canon", "EOS 90D", canon_eos_90d_raw_iso_100_nocrop_nodual_cr3, "raw_modes/Canon EOS 90D_RAW_ISO_100_nocrop_nodual.CR3");
   }
+  mod eos_c50_raw_modes {
+    super::super::rawdb_test_file!("Canon", "EOS C50", canon_eos_c50_craw_cr3, "raw_modes/Canon_EOS_C50_CRAW.CR3");
+    super::super::rawdb_test_file!("Canon", "EOS C50", canon_eos_c50_raw_cr3, "raw_modes/Canon_EOS_C50_RAW.CR3");
+  }
   mod eos_d2000c_raw_modes {
     super::super::rawdb_test_file!("Canon", "EOS D2000C", canon_d2000c_raw_iso_200_tif, "raw_modes/Canon D2000C_RAW_ISO_200.TIF");
   }
@@ -1431,6 +1435,7 @@ mod nikon {
   }
   mod d2hs_raw_modes {
     super::super::rawdb_test_file!("Nikon", "D2Hs", nikon_d2hs_iso_200_12bits_uncompressed_nef, "raw_modes/NIKON D2Hs_ISO_200_12bits_Uncompressed.NEF");
+    super::super::rawdb_test_file!("Nikon", "D2Hs", nikon_d2hs_wb0x206_nef, "raw_modes/Nikon_D2Hs_wb0x206.NEF");
   }
   mod d2x_raw_modes {
     super::super::rawdb_test_file!("Nikon", "D2X", nikon_d2x_iso_100_12bits_uncompressed_nef, "raw_modes/NIKON D2X_ISO_100_12bits_Uncompressed.NEF");
@@ -2138,6 +2143,12 @@ mod panasonic {
     super::super::rawdb_test_file!("Panasonic", "DC-GX9", dc_gx9_iso_200_4fmt_1x1_rw2, "raw_modes/DC-GX9_ISO_200_4fmt_1x1.RW2");
     super::super::rawdb_test_file!("Panasonic", "DC-GX9", dc_gx9_iso_200_4fmt_3x2_rw2, "raw_modes/DC-GX9_ISO_200_4fmt_3x2.RW2");
     super::super::rawdb_test_file!("Panasonic", "DC-GX9", dc_gx9_iso_200_4fmt_4x3_rw2, "raw_modes/DC-GX9_ISO_200_4fmt_4x3.RW2");
+  }
+  mod dc_l10_raw_modes {
+    super::super::rawdb_test_file!("Panasonic", "DC-L10", lumix_dc_10_16x9_rw2, "raw_modes/Lumix DC-10_16x9.RW2");
+    super::super::rawdb_test_file!("Panasonic", "DC-L10", lumix_dc_10_1x1_rw2, "raw_modes/Lumix DC-10_1x1.RW2");
+    super::super::rawdb_test_file!("Panasonic", "DC-L10", lumix_dc_10_3x2_rw2, "raw_modes/Lumix DC-10_3x2.RW2");
+    super::super::rawdb_test_file!("Panasonic", "DC-L10", lumix_dc_10_4x3_rw2, "raw_modes/Lumix DC-10_4x3.RW2");
   }
   mod dc_lx100m2_raw_modes {
     super::super::rawdb_test_file!("Panasonic", "DC-LX100M2", dc_lx100m2_iso_200_panasonic_raw_1_3552x3552_rw2, "raw_modes/DC-LX100M2_ISO_200_Panasonic RAW 1_3552x3552.RW2");
@@ -2927,6 +2938,10 @@ mod sony {
   mod dsc_rx10m4_raw_modes {
     super::super::rawdb_test_file!("Sony", "DSC-RX10M4", dsc_rx10m4_iso_100_12bits_sony_arw_compressed_arw, "raw_modes/DSC-RX10M4_ISO_100_12bits_Sony ARW Compressed.ARW");
   }
+  mod dsc_rx10m5_raw_modes {
+    super::super::rawdb_test_file!("Sony", "DSC-RX10M5", sony_dsc_rx10m5_lossless_arw, "raw_modes/Sony_DSC_RX10M5_lossless.ARW");
+    super::super::rawdb_test_file!("Sony", "DSC-RX10M5", sony_dsc_rx10m5_lossy_arw, "raw_modes/Sony_DSC_RX10M5_lossy.ARW");
+  }
   mod dsc_rx1r_raw_modes {
     super::super::rawdb_test_file!("Sony", "DSC-RX1R", dsc_rx1r_iso_6400_14bits_sony_arw_compressed_arw, "raw_modes/DSC-RX1R_ISO_6400_14bits_Sony ARW Compressed.ARW");
   }
@@ -3158,6 +3173,12 @@ mod sony {
     super::super::rawdb_test_file!("Sony", "ILCE-7RM5", sony_7rm5_lossless_s_ljpeg_arw, "yuv/Sony_7RM5_Lossless_S_LJPEG.ARW");
     super::super::rawdb_test_file!("Sony", "ILCE-7RM5", sony_7rm5_s35_lossless_m_ljpeg_arw, "yuv/Sony_7RM5_S35_Lossless_M_LJPEG.ARW");
     super::super::rawdb_test_file!("Sony", "ILCE-7RM5", sony_7rm5_s35_lossless_s_ljpeg_arw, "yuv/Sony_7RM5_S35_Lossless_S_LJPEG.ARW");
+  }
+  mod ilce_7rm6_raw_modes {
+    super::super::rawdb_test_file!("Sony", "ILCE-7RM6", ilce_7rm6_apsc_land_raw_arw, "raw_modes/ILCE-7RM6_APSC_land_RAW.ARW");
+    super::super::rawdb_test_file!("Sony", "ILCE-7RM6", ilce_7rm6_apsc_port_raw_arw, "raw_modes/ILCE-7RM6_APSC_port_RAW.ARW");
+    super::super::rawdb_test_file!("Sony", "ILCE-7RM6", ilce_7rm6_ff_land_raw_arw, "raw_modes/ILCE-7RM6_FF_land_RAW.ARW");
+    super::super::rawdb_test_file!("Sony", "ILCE-7RM6", ilce_7rm6_ff_port_raw_arw, "raw_modes/ILCE-7RM6_FF_port_RAW.ARW");
   }
   mod ilce_7s_raw_modes {
     super::super::rawdb_test_file!("Sony", "ILCE-7S", ilce_7s_iso_400_14bits_sony_arw_compressed_arw, "raw_modes/ILCE-7S_ISO_400_14bits_Sony ARW Compressed.ARW");

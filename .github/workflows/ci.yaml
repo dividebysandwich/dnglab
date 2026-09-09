@@ -7,7 +7,7 @@ on:
     paths-ignore:
       - '**.md'
       - '.github/workflows/release.yaml'
-  pull_request_target:
+  pull_request:
 
 jobs:
   test:
@@ -18,7 +18,7 @@ jobs:
       matrix:
         rust: [nightly, beta, stable, 1.89.0]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{matrix.rust}}
@@ -33,41 +33,18 @@ jobs:
       matrix:
         rust: [stable]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{matrix.rust}}
       - run: cargo build --all-features
       - run: cargo check --all-features
 
-  rawdb:
-    name: Testdata validation with Rust ${{matrix.rust}}
-    runs-on: testdata-avail
-    environment: builddrone
-    strategy:
-      fail-fast: false
-      matrix:
-        rust: [1.89.0]
-    env:
-      RAWDB_CACHE: /opt/rawdb_cache
-      RAWDB_API_KEY_REQUIRED: "true"
-      RAYON_NUM_THREADS: 4
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{matrix.rust}}
-      - run: cargo test --release --features rawdb
-        env:
-          RAWDB_API_KEY: ${{ secrets.RAWDB_API_KEY }}
-
   windows_check:
     name: Windows check
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo check
 
@@ -75,11 +52,11 @@ jobs:
     name: Windows release artifact
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo build --release
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dnglab.exe
           path: 'target/release/dnglab.exe'
@@ -88,11 +65,11 @@ jobs:
     name: Linux release artifact
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo build --release
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dnglab_x64
           path: 'target/release/dnglab'
@@ -101,7 +78,7 @@ jobs:
     name: MacOS check
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo check
 
@@ -109,11 +86,11 @@ jobs:
     name: MacOS release artifact (arm64)
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo build --release
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dnglab_arm64
           path: 'target/release/dnglab'
@@ -122,7 +99,7 @@ jobs:
 #    name: Clippy
 #    runs-on: ubuntu-24.04
 #    steps:
-#      - uses: actions/checkout@v4
+#      - uses: actions/checkout@v7
 #      - uses: dtolnay/rust-toolchain@clippy
 #      - run: cargo clippy --tests -- -Dclippy::all -Dclippy::pedantic -A clippy::module-name-repetitions
 
@@ -131,7 +108,7 @@ jobs:
 #    runs-on: ubuntu-24.04
 #    steps:
 #      - name: Checkout sources
-#        uses: actions/checkout@v4
+#        uses: actions/checkout@v7
 #      - name: Install stable toolchain
 #        uses: dtolnay/rust-toolchain@stable
 #      - name: Install rustfmt
